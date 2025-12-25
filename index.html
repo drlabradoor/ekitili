@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EkiTili - Изучение казахского языка</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+<body>
+    <div id="preloader" class="preloader">
+      <img src="assets/images/horse_happy.png" alt="EkiTili" class="preloader-mascot">
+    </div>
+    <div class="app-container">
+        <div class="app-header">
+            <img src="assets/images/logo.png" alt="EkiTili" class="app-logo">
+        </div>
+        <main class="main-tabs">
+            <!-- Уроки -->
+            <section id="tab-lessons" class="tab-section active">
+                <div class="lessons-path"></div>
+                <div class="lesson-page" style="display:none;"></div>
+            </section>
+            <!-- Карточки -->
+            <section id="tab-cards" class="tab-section">
+                <div class="flashcards-section">
+                    <div class="flashcard-categories"></div>
+                    <div class="flashcard"></div>
+                    <div class="feedback-btns"></div>
+                </div>
+                <div id="results-modal" class="modal" style="display:none;"></div>
+            </section>
+            <!-- Лидерборд -->
+            <section id="tab-leaderboard" class="tab-section">
+                <div class="stat-leaderboard">
+                    <div class="leaderboard-label">Лидерборд</div>
+                    <div class="leaderboard-block">
+                        <div class="leaderboard-title">Лучшие за неделю</div>
+                        <div class="leaderboard-list" id="leaderboardWeek"></div>
+                    </div>
+                    <div class="leaderboard-block">
+                        <div class="leaderboard-title">Лучшие за месяц</div>
+                        <div class="leaderboard-list" id="leaderboardMonth"></div>
+                    </div>
+                </div>
+                <div class="leaderboard-user" id="leaderboardUser">
+                    <span class="leaderboard-user-label">Ваше место:</span>
+                    <span class="leaderboard-user-place" id="leaderboardUserPlace">12</span>
+                    <span class="leaderboard-user-points" id="leaderboardUserPoints">85★</span>
+                </div>
+            </section>
+            <!-- Профиль + Статистика -->
+            <section id="tab-profile" class="tab-section">
+                <div class="profile-section">
+                    <div class="profile-avatar-large">A</div>
+                    <div class="profile-nickname" id="profileNickname">alexey_kz</div>
+                    <div class="profile-about-label">О себе</div>
+                    <div class="profile-about" id="profileAbout">Люблю казахский язык и учусь каждый день!</div>
+                    <div class="profile-actions">
+                        <button id="login-btn" class="login-btn" style="display:none;">Войти</button>
+                        <button id="logout-btn" class="logout-btn" style="display:none;">Выйти</button>
+                    </div>
+                </div>
+                <div class="stats-section">
+                    <div class="stat-main">
+                        <div class="stat-circle-progress">
+                            <canvas id="courseProgressCircle" width="110" height="110"></canvas>
+                            <div class="circle-label"><span id="courseProgressPercent">0%</span><br>курс</div>
+                        </div>
+                        <div class="stat-streak">
+                            <div class="streak-label">🔥 Стрик</div>
+                            <div class="streak-value" id="streakValue">0</div>
+                            <div class="streak-desc">дней подряд</div>
+                            <div class="streak-week" id="streakWeek"></div>
+                        </div>
+                    </div>
+                    <div class="stat-activity">
+                        <div class="activity-label">Активность (7 дней)</div>
+                        <canvas id="activityChart" width="220" height="60"></canvas>
+                    </div>
+                    <div class="stat-categories">
+                        <div class="cat-label">Прогресс по категориям</div>
+                        <div class="cat-bars" id="catBars"></div>
+                    </div>
+                    <div class="stat-achievements">
+                        <div class="ach-label">Достижения</div>
+                        <div class="ach-list" id="achList">(скоро будут!)</div>
+                    </div>
+                </div>
+            </section>
+        </main>
+        <!-- Нижняя навигация -->
+        <nav class="bottom-nav">
+            <div class="nav-item active" data-tab="tab-lessons">
+                <span class="nav-icon"><i class="fas fa-book"></i></span>
+                <span class="nav-label">Уроки</span>
+            </div>
+            <div class="nav-item" data-tab="tab-cards">
+                <span class="nav-icon"><i class="fas fa-layer-group"></i></span>
+                <span class="nav-label">Карточки</span>
+            </div>
+            <div class="nav-item" data-tab="tab-leaderboard">
+                <span class="nav-icon"><i class="fas fa-trophy"></i></span>
+                <span class="nav-label">Лидерборд</span>
+            </div>
+            <div class="nav-item" data-tab="tab-profile">
+                <span class="nav-icon"><i class="fas fa-user"></i></span>
+                <span class="nav-label">Профиль</span>
+            </div>
+        </nav>
+    </div>
+    
+    <!-- Модальное окно входа -->
+    <div id="login-modal" class="auth-modal" style="display:none;">
+        <div class="auth-modal-content">
+            <button class="auth-modal-close" id="close-login-modal">&times;</button>
+            <h2 class="auth-modal-title">Вход</h2>
+            <form id="login-form">
+                <div class="auth-form-group">
+                    <label for="login-username">Имя пользователя</label>
+                    <input type="text" id="login-username" name="username" required autocomplete="username">
+                </div>
+                <div class="auth-form-group">
+                    <label for="login-password">Пароль</label>
+                    <div class="auth-password-wrapper">
+                        <input type="password" id="login-password" name="password" required autocomplete="current-password">
+                        <button type="button" class="auth-eye-btn" data-target="login-password" aria-label="Показать пароль">
+                            <i class="fas fa-eye-slash"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="auth-error-message" id="login-error"></div>
+                <button type="submit" class="auth-submit-btn">Войти</button>
+                <div class="auth-switch">
+                    <span>Нет аккаунта? </span>
+                    <a href="#" id="switch-to-register">Зарегистрироваться</a>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Модальное окно регистрации -->
+    <div id="register-modal" class="auth-modal" style="display:none;">
+        <div class="auth-modal-content">
+            <button class="auth-modal-close" id="close-register-modal">&times;</button>
+            <h2 class="auth-modal-title">Регистрация</h2>
+            <form id="register-form">
+                <div class="auth-form-group">
+                    <label for="register-username">Имя пользователя</label>
+                    <input type="text" id="register-username" name="username" required autocomplete="username" minlength="3" maxlength="50">
+                </div>
+                <div class="auth-form-group">
+                    <label for="register-password">Пароль</label>
+                    <div class="auth-password-wrapper">
+                        <input type="password" id="register-password" name="password" required autocomplete="new-password" minlength="6">
+                        <button type="button" class="auth-eye-btn" data-target="register-password" aria-label="Показать пароль">
+                            <i class="fas fa-eye-slash"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="auth-form-group">
+                    <label for="register-password-confirm">Подтвердите пароль</label>
+                    <div class="auth-password-wrapper">
+                        <input type="password" id="register-password-confirm" name="passwordConfirm" required autocomplete="new-password">
+                        <button type="button" class="auth-eye-btn" data-target="register-password-confirm" aria-label="Показать пароль">
+                            <i class="fas fa-eye-slash"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="auth-error-message" id="register-error"></div>
+                <button type="submit" class="auth-submit-btn">Зарегистрироваться</button>
+                <div class="auth-switch">
+                    <span>Уже есть аккаунт? </span>
+                    <a href="#" id="switch-to-login">Войти</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Модальное окно подтверждения выхода -->
+    <div id="logout-confirm-modal" class="auth-modal" style="display:none;">
+        <div class="confirm-modal-content">
+            <h3 class="confirm-title">Выйти из аккаунта?</h3>
+            <p class="confirm-text">Ваш прогресс останется сохранён.</p>
+            <div class="confirm-actions">
+                <button id="confirm-logout" class="logout-btn">Выйти</button>
+                <button id="cancel-logout" class="login-btn">Отмена</button>
+            </div>
+        </div>
+    </div>
+    
+    <script type="module" src="src/main.js"></script>
+</body>
+</html>
