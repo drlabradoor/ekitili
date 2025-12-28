@@ -9,6 +9,7 @@ import { initRouter } from './navigation/router.js';
 import { initAuth, showLogin } from './modules/auth/auth.js';
 import { isAuthenticated, checkApiConnection } from './services/auth.js';
 import { loadUserProfile } from './data/user.js';
+import { initMemoryGame } from './modules/games/memory.js';
 
 // Функция инициализации
 async function initializeApp() {
@@ -21,57 +22,58 @@ async function initializeApp() {
             alert('ОШИБКА: Откройте сайт через сервер!\n\nЗапустите: node server.js\nЗатем откройте: http://localhost:3000');
             return;
         }
-        
+
         // Проверяем подключение к API
         const apiAvailable = await checkApiConnection();
         if (!apiAvailable) {
             console.warn('⚠ API сервер недоступен. Убедитесь, что сервер запущен на порту 3000.');
             console.warn('Запустите: node server.js');
         }
-        
+
         // Загружаем профиль пользователя из localStorage
         loadUserProfile();
-        
+
         // Проверяем авторизацию
         if (!isAuthenticated()) {
             // Если пользователь не авторизован, показываем окно входа
             showLogin();
         }
-        
-    // Инициализация данных
-    initializeFlashcards();
-    
-    // Инициализация модулей
+
+        // Инициализация данных
+        initializeFlashcards();
+
+        // Инициализация модулей
         initAuth(); // Инициализация модуля авторизации
-    renderLessonsPath();
-    initFlashcards();
-    initLeaderboard();
-    renderStats();
+        renderLessonsPath();
+        initFlashcards();
+        initLeaderboard();
+        renderStats();
         updateProfileDisplay(); // Обновляем отображение профиля
-    initProfile();
+        initProfile();
+        initMemoryGame();
         updateAuthButtons(); // Обновляем кнопки входа/выхода в профиле
-    initRouter();
+        initRouter();
     } catch (error) {
         console.error('Initialization error:', error);
     }
-    
+
     // Анимация прогресс-бара
     const progressFill = document.querySelector('.progress-fill');
     if (progressFill) {
         let percent = 65; // Можно динамически менять
-            progressFill.style.transition = 'width 1s';
-            progressFill.style.width = percent + '%';
+        progressFill.style.transition = 'width 1s';
+        progressFill.style.width = percent + '%';
     }
-    
+
     // Скрываем preloader сразу
     const preloader = document.getElementById('preloader');
     if (preloader) {
-                preloader.style.display = 'none';
+        preloader.style.display = 'none';
         preloader.style.visibility = 'hidden';
         preloader.style.opacity = '0';
         preloader.style.pointerEvents = 'none';
         preloader.style.zIndex = '-1';
-                document.body.style.overflow = '';
+        document.body.style.overflow = '';
     }
 }
 
@@ -81,4 +83,4 @@ if (document.readyState === 'loading') {
 } else {
     // DOM уже загружен, запускаем сразу
     initializeApp();
-    }
+}
