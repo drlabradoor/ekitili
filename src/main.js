@@ -7,12 +7,28 @@ import { renderStats, updateProfileDisplay } from './modules/profile/profileRend
 import { initProfile, updateAuthButtons } from './modules/profile/profile.js';
 import { initRouter } from './navigation/router.js';
 import { initAuth, showLogin } from './modules/auth/auth.js';
-import { isAuthenticated } from './services/auth.js';
+import { isAuthenticated, checkApiConnection } from './services/auth.js';
 import { loadUserProfile } from './data/user.js';
 
 // Функция инициализации
-function initializeApp() {
+async function initializeApp() {
     try {
+        // Проверяем, что сайт открыт через HTTP, а не file://
+        if (window.location.protocol === 'file:') {
+            console.error('❌ ОШИБКА: Сайт открыт через file:// протокол!');
+            console.error('Откройте сайт через сервер: http://localhost:3000');
+            console.error('Запустите сервер: node server.js');
+            alert('ОШИБКА: Откройте сайт через сервер!\n\nЗапустите: node server.js\nЗатем откройте: http://localhost:3000');
+            return;
+        }
+        
+        // Проверяем подключение к API
+        const apiAvailable = await checkApiConnection();
+        if (!apiAvailable) {
+            console.warn('⚠ API сервер недоступен. Убедитесь, что сервер запущен на порту 3000.');
+            console.warn('Запустите: node server.js');
+        }
+        
         // Загружаем профиль пользователя из localStorage
         loadUserProfile();
         

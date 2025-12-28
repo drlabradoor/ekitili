@@ -36,12 +36,6 @@ export function renderLeaderboard(list, containerId) {
         container.appendChild(item);
     });
     
-    // Демонстрация: показываем место и очки пользователя (например, 12 место, 85★)
-    if (containerId === 'leaderboardMonth') {
-        const userPlace = document.getElementById('leaderboardUserPlace');
-        const userPoints = document.getElementById('leaderboardUserPoints');
-        if (userPlace) userPlace.textContent = '12';
-        if (userPoints) userPoints.textContent = '85★';
-    }
+    // Место и очки пользователя обновляются отдельно в loadUserLeaderboardData
 }
 

@@ -1,0 +1,751 @@
+document.addEventListener('DOMContentLoaded', function() {
+    // 1. Данные
+    const leaderboardWeek = [
+        { name: 'Алексей', points: 320 },
+        { name: 'Мария', points: 290 },
+        { name: 'Иван', points: 250 },
+        { name: 'Динара', points: 180 },
+        { name: 'Сергей', points: 120 }
+    ];
+    const leaderboardMonth = [
+        { name: 'Мария', points: 1200 },
+        { name: 'Алексей', points: 1100 },
+        { name: 'Динара', points: 950 },
+        { name: 'Иван', points: 900 },
+        { name: 'Сергей', points: 700 }
+    ];
+    const flashcardsData = {
+        food: [
+            { front: 'bread', back: 'хлеб', phonetic: '[брэд]', stats: { correct: 0, incorrect: 0 } },
+            { front: 'milk', back: 'молоко', phonetic: '[милк]', stats: { correct: 0, incorrect: 0 } },
+            { front: 'apple', back: 'яблоко', phonetic: '[эпл]', stats: { correct: 0, incorrect: 0 } },
+            { front: 'orange', back: 'апельсин', phonetic: '[орандж]', stats: { correct: 0, incorrect: 0 } }
+        ],
+        transport: [
+            { front: 'bus', back: 'автобус', phonetic: '[бас]', stats: { correct: 0, incorrect: 0 } },
+            { front: 'car', back: 'машина', phonetic: '[кар]', stats: { correct: 0, incorrect: 0 } }
+        ],
+        work: [
+            { front: 'office', back: 'офис', phonetic: '[офис]', stats: { correct: 0, incorrect: 0 } },
+            { front: 'job', back: 'работа', phonetic: '[джоб]', stats: { correct: 0, incorrect: 0 } }
+        ]
+    };
+    // --- Переменные для карточек (должны быть до всех вызовов рендера) ---
+    let currentCategory = 'food';
+    let currentIndex = 0;
+    let isFlipped = false;
+    let srsQueue = [];
+    const lessonsData = [
+        {
+            title: 'Приветствие',
+            theory: 'В этом уроке вы узнаете, как здороваться и прощаться на казахском языке.\n\n<b>Сәлем!</b> — Привет!<br><b>Сау бол!</b> — Пока!<br><b>Қайырлы таң!</b> — Доброе утро!<br><b>Қайырлы кеш!</b> — Добрый вечер!',
+            tasks: [
+                { type: 'choice', question: 'Как будет "Привет!"', options: ['Сәлем!', 'Сау бол!', 'Рахмет!'], answer: 0 },
+                { type: 'choice', question: 'Как сказать "Пока!"?', options: ['Сәлем!', 'Сау бол!', 'Кеш жарық!'], answer: 1 }
+            ]
+        },
+        {
+            title: 'Семья',
+            theory: 'Слова для членов семьи на казахском языке:<br><b>Әке</b> — Отец<br><b>Ана</b> — Мать<br><b>Бала</b> — Ребёнок',
+            tasks: [
+                { type: 'choice', question: 'Как будет "Отец"?', options: ['Ана', 'Әке', 'Бала'], answer: 1 },
+                { type: 'choice', question: 'Как будет "Мать"?', options: ['Әке', 'Ана', 'Аға'], answer: 1 }
+            ]
+        },
+        {
+            title: 'Еда',
+            theory: 'Основные слова по теме "Еда":<br><b>Нан</b> — Хлеб<br><b>Сүт</b> — Молоко<br><b>Су</b> — Вода',
+            tasks: [
+                { type: 'choice', question: 'Как будет "Хлеб"?', options: ['Су', 'Нан', 'Сүт'], answer: 1 },
+                { type: 'choice', question: 'Как будет "Молоко"?', options: ['Сүт', 'Нан', 'Су'], answer: 0 }
+            ]
+        }
+    ];
+    let lessonsProgress = Array(lessonsData.length).fill(false);
+    lessonsProgress[0] = null; // первый урок активен по умолчанию
+    // Стрик: 4 дня подряд
+    let demoStreak = 12;
+    // Активность по дням (7 дней)
+    let demoActivity = [2, 3, 1, 4, 2, 6, 1];
+
+    // --- SRS интервалы (в днях) ---
+    const SRS_INTERVALS = [0, 1, 3, 7, 21];
+
+    // --- База карточек пользователя ---
+    let userFlashcards = [
+        { front: 'Сәлем', back: 'Привет', phonetic: '[sælem]', srsLevel: 1, status: 'new', stats: { correct: 0, incorrect: 0 } },
+        { front: 'Кітап', back: 'Книга', phonetic: '[kitap]', srsLevel: 1, status: 'new', stats: { correct: 0, incorrect: 0 } },
+        { front: 'Су', back: 'Вода', phonetic: '[su]', srsLevel: 1, status: 'new', stats: { correct: 0, incorrect: 0 } },
+        { front: 'Ана', back: 'Мама', phonetic: '[ana]', srsLevel: 2, status: 'learning', stats: { correct: 1, incorrect: 0 } },
+        { front: 'Әке', back: 'Папа', phonetic: '[äke]', srsLevel: 2, status: 'learning', stats: { correct: 1, incorrect: 0 } },
+        { front: 'Үй', back: 'Дом', phonetic: '[üi]', srsLevel: 2, status: 'learning', stats: { correct: 1, incorrect: 0 } },
+        { front: 'Дос', back: 'Друг', phonetic: '[dos]', srsLevel: 3, status: 'learning', stats: { correct: 2, incorrect: 0 } },
+        { front: 'Жол', back: 'Дорога', phonetic: '[jol]', srsLevel: 3, status: 'learning', stats: { correct: 2, incorrect: 0 } },
+        { front: 'Күн', back: 'День', phonetic: '[kün]', srsLevel: 3, status: 'learning', stats: { correct: 2, incorrect: 0 } },
+        { front: 'Тіл', back: 'Язык', phonetic: '[til]', srsLevel: 4, status: 'learning', stats: { correct: 3, incorrect: 0 } },
+        { front: 'Мектеп', back: 'Школа', phonetic: '[mektep]', srsLevel: 4, status: 'learning', stats: { correct: 3, incorrect: 0 } },
+        { front: 'Оқушы', back: 'Ученик', phonetic: '[oqūshy]', srsLevel: 4, status: 'learning', stats: { correct: 3, incorrect: 0 } },
+        { front: 'Қала', back: 'Город', phonetic: '[qala]', srsLevel: 5, status: 'reviewed', stats: { correct: 4, incorrect: 0 } },
+        { front: 'Адам', back: 'Человек', phonetic: '[adam]', srsLevel: 5, status: 'reviewed', stats: { correct: 4, incorrect: 0 } },
+        { front: 'Бала', back: 'Ребёнок', phonetic: '[bala]', srsLevel: 5, status: 'reviewed', stats: { correct: 4, incorrect: 0 } },
+    ];
+
+    // --- Устанавливаем nextReview для новых карточек (srsLevel=1 или status 'new') ---
+    const today = new Date(); today.setHours(0,0,0,0);
+    userFlashcards.forEach(card => {
+        if (card.srsLevel === 1 || card.status === 'new') card.nextReview = new Date(today);
+    });
+
+    // --- При загрузке страницы сбрасываем сегодняшние карточки (srsLevel=1)
+    userFlashcards.forEach(card => {
+        if (card.srsLevel === 1) card.status = 'new';
+    });
+
+    // --- Функция для добавления новых карточек после урока ---
+    function addNewFlashcardsFromLesson(lesson) {
+        // Берём первые 5 слов из lesson (или все, если меньше)
+        const words = lesson.tasks.slice(0, 5).map(task => ({
+            front: task.question.replace(/Как будет |Как сказать |\?|"/g, '').trim(),
+            back: task.options[task.answer],
+            phonetic: '', // Можно добавить если есть
+        }));
+        const today = new Date(); today.setHours(0,0,0,0);
+        words.forEach(word => {
+            userFlashcards.push({
+                ...word,
+                srsLevel: 1,
+                status: 'new',
+                nextReview: new Date(today),
+                stats: { correct: 0, incorrect: 0 }
+            });
+        });
+    }
+
+    // --- Фильтрация карточек на сегодня ---
+    function getDueFlashcards() {
+        const today = new Date();
+        today.setHours(0,0,0,0);
+        return userFlashcards.filter(card => {
+            const reviewDate = new Date(card.nextReview);
+            reviewDate.setHours(0,0,0,0);
+            return reviewDate <= today;
+        });
+    }
+
+    // 2. Все функции рендера
+    function renderLeaderboard(list, containerId) {
+        const container = document.getElementById(containerId);
+        if (!container) return;
+        container.innerHTML = '';
+        list.forEach((user, idx) => {
+            const item = document.createElement('div');
+            item.className = 'leaderboard-item';
+            // Аватарка (плейсхолдер с инициалами)
+            const avatar = document.createElement('div');
+            avatar.className = 'leaderboard-avatar';
+            avatar.textContent = user.name ? user.name[0].toUpperCase() : '';
+            item.appendChild(avatar);
+            const place = document.createElement('div');
+            place.className = 'leaderboard-place';
+            if (idx === 0) place.classList.add('top1');
+            if (idx === 1) place.classList.add('top2');
+            if (idx === 2) place.classList.add('top3');
+            place.textContent = idx + 1;
+            const name = document.createElement('div');
+            name.className = 'leaderboard-name';
+            name.textContent = user.name;
+            const points = document.createElement('div');
+            points.className = 'leaderboard-points';
+            points.textContent = user.points + '★';
+            item.appendChild(place);
+            item.appendChild(name);
+            item.appendChild(points);
+            container.appendChild(item);
+        });
+        // Демонстрация: показываем место и очки пользователя (например, 12 место, 85★)
+        if (containerId === 'leaderboardMonth') {
+            const userPlace = document.getElementById('leaderboardUserPlace');
+            const userPoints = document.getElementById('leaderboardUserPoints');
+            if (userPlace) userPlace.textContent = '12';
+            if (userPoints) userPoints.textContent = '85★';
+        }
+    }
+
+    function renderLessonsPath() {
+        const lessonsPath = document.querySelector('#tab-lessons .lessons-path');
+        lessonsPath.innerHTML = '';
+        let firstActiveFound = false;
+        lessonsData.forEach((lesson, idx) => {
+            let state = '';
+            if (lessonsProgress[idx] === true) {
+                state = 'completed';
+            } else if (lessonsProgress[idx] === null && !firstActiveFound) {
+                state = 'active';
+                firstActiveFound = true;
+            } else {
+                state = 'locked';
+            }
+            const levelDiv = document.createElement('div');
+            levelDiv.className = `lesson-level ${state}`;
+            levelDiv.setAttribute('data-lesson', idx);
+            levelDiv.innerHTML = `<div class="level-circle">${state === 'locked' ? '<i class=\'fas fa-lock\'></i>' : idx + 1}</div><div class="level-title">${lesson.title}</div>`;
+            if (state === 'active' || state === 'completed') {
+                levelDiv.addEventListener('click', function() {
+                    showLesson(parseInt(levelDiv.getAttribute('data-lesson')));
+                });
+            }
+            lessonsPath.appendChild(levelDiv);
+        });
+    }
+
+    function renderFlashcardsSection() {
+        // --- Вкладки управления ---
+        const catContainer = document.querySelector('.flashcard-categories');
+        if (catContainer) {
+            catContainer.innerHTML = '';
+            const repeatTab = document.createElement('button');
+            repeatTab.className = 'flashcard-mode-btn repeat-btn';
+            repeatTab.innerHTML = '<i class="fas fa-rotate-right"></i>';
+            repeatTab.setAttribute('aria-label', 'Повторять');
+            repeatTab.title = 'Повторять';
+            const libraryTab = document.createElement('button');
+            libraryTab.className = 'flashcard-mode-btn library-btn';
+            libraryTab.innerHTML = '<i class="fas fa-list"></i>';
+            libraryTab.setAttribute('aria-label', 'Библиотека');
+            libraryTab.title = 'Библиотека';
+            catContainer.appendChild(repeatTab);
+            catContainer.appendChild(libraryTab);
+            // Состояние
+            let mode = renderFlashcardsSection.mode || 'repeat';
+            repeatTab.classList.toggle('active', mode === 'repeat');
+            libraryTab.classList.toggle('active', mode === 'library');
+            repeatTab.onclick = () => { renderFlashcardsSection.mode = 'repeat'; renderFlashcardsSection(); };
+            libraryTab.onclick = () => { renderFlashcardsSection.mode = 'library'; renderFlashcardsSection(); };
+        }
+        // --- SRS очередь (режим повторения) ---
+        if (!renderFlashcardsSection.mode || renderFlashcardsSection.mode === 'repeat') {
+            const dueCards = getDueFlashcards();
+            const flashcardContainer = document.querySelector('.flashcard');
+            const feedbackBtns = document.querySelector('.feedback-btns');
+            // Статистика
+            const statsDiv = document.createElement('div');
+            statsDiv.className = 'flashcard-stats';
+            const newCount = userFlashcards.filter(c => c.status === 'new').length;
+            const dueCount = dueCards.length;
+            const reviewedToday = userFlashcards.filter(c => {
+                const today = new Date(); today.setHours(0,0,0,0);
+                const lastReview = c.lastReview ? new Date(c.lastReview) : null;
+                return lastReview && lastReview >= today;
+            }).length;
+            statsDiv.innerHTML = `<b>Новых:</b> ${newCount} &nbsp; <b>На сегодня:</b> ${dueCount} &nbsp; <b>Повторено:</b> ${reviewedToday}`;
+            if (catContainer) catContainer.appendChild(statsDiv);
+            if (dueCards.length === 0) {
+                if (flashcardContainer) flashcardContainer.innerHTML = '<div style="padding:32px 0;text-align:center;font-size:1.2em;">На сегодня всё!<br><span style="font-size:2em;">🎉</span></div>';
+                if (feedbackBtns) feedbackBtns.innerHTML = '';
+                return;
+            }
+            let currentCardIdx = 0;
+            function showCard(idx) {
+                const card = dueCards[idx];
+                if (!flashcardContainer) return;
+                flashcardContainer.innerHTML = '';
+                const cardFront = document.createElement('div');
+                cardFront.className = 'card-front';
+                cardFront.textContent = card.front;
+                flashcardContainer.appendChild(cardFront);
+                const cardPhonetic = document.createElement('div');
+                cardPhonetic.className = 'card-phonetic';
+                cardPhonetic.textContent = card.phonetic || '';
+                flashcardContainer.appendChild(cardPhonetic);
+                const flipBtn = document.createElement('div');
+                flipBtn.className = 'flip-btn';
+                flipBtn.textContent = 'Показать перевод';
+                flashcardContainer.appendChild(flipBtn);
+                let isFlipped = false;
+                flipBtn.onclick = () => {
+                    isFlipped = !isFlipped;
+                    cardFront.textContent = isFlipped ? card.back : card.front;
+                    cardPhonetic.textContent = isFlipped ? '' : (card.phonetic || '');
+                    flipBtn.textContent = isFlipped ? 'Показать слово' : 'Показать перевод';
+                };
+                let statsDiv = flashcardContainer.querySelector('.card-stats');
+                if (!statsDiv) {
+                    statsDiv = document.createElement('div');
+                    statsDiv.className = 'card-stats';
+                    flashcardContainer.appendChild(statsDiv);
+                }
+                statsDiv.innerHTML = `<span style="color:green">Знаю: ${card.stats.correct}</span> | <span style="color:red">Не знаю: ${card.stats.incorrect}</span>`;
+            }
+            showCard(currentCardIdx);
+            if (feedbackBtns) {
+                feedbackBtns.innerHTML = '';
+                const correctBtn = document.createElement('button');
+                correctBtn.className = 'correct-btn';
+                correctBtn.textContent = 'Знаю';
+                correctBtn.onclick = () => {
+                    const card = dueCards[currentCardIdx];
+                    card.stats.correct++;
+                    card.srsLevel = Math.min(card.srsLevel + 1, SRS_INTERVALS.length);
+                    const nextDays = SRS_INTERVALS[card.srsLevel - 1] || 21;
+                    const nextDate = new Date();
+                    nextDate.setDate(nextDate.getDate() + nextDays);
+                    card.nextReview = nextDate;
+                    card.lastReview = new Date();
+                    card.status = card.srsLevel >= SRS_INTERVALS.length ? 'reviewed' : 'learning';
+                    currentCardIdx++;
+                    if (currentCardIdx < dueCards.length) {
+                        showCard(currentCardIdx);
+                    } else {
+                        renderFlashcardsSection();
+                    }
+                };
+                const incorrectBtn = document.createElement('button');
+                incorrectBtn.className = 'incorrect-btn';
+                incorrectBtn.textContent = 'Не знаю';
+                incorrectBtn.onclick = () => {
+                    const card = dueCards[currentCardIdx];
+                    card.stats.incorrect++;
+                    card.srsLevel = 1;
+                    card.nextReview = new Date();
+                    card.lastReview = new Date();
+                    card.status = 'learning';
+                    currentCardIdx++;
+                    if (currentCardIdx < dueCards.length) {
+                        showCard(currentCardIdx);
+                    } else {
+                        renderFlashcardsSection();
+                    }
+                };
+                feedbackBtns.appendChild(correctBtn);
+                feedbackBtns.appendChild(incorrectBtn);
+            }
+            return;
+        }
+        // --- Библиотека карточек ---
+        // (режим library)
+        const flashcardContainer = document.querySelector('.flashcard');
+        const feedbackBtns = document.querySelector('.feedback-btns');
+        if (flashcardContainer) {
+            flashcardContainer.innerHTML = '';
+            const table = document.createElement('div');
+            table.className = 'flashcard-library-table';
+            // Заголовок
+            table.innerHTML = `<div class=\"lib-row lib-header\">
+                <div>Слово</div><div>Перевод</div><div>🗣️</div><div>SRS</div>
+            </div>`;
+            userFlashcards.forEach(card => {
+                const row = document.createElement('div');
+                row.className = 'lib-row';
+                let srsColor = '#bbb';
+                if (card.srsLevel === 1) srsColor = '#fbbc05';
+                if (card.srsLevel === 2) srsColor = '#4285f4';
+                if (card.srsLevel === 3) srsColor = '#34a853';
+                if (card.srsLevel === 4) srsColor = '#a142f4';
+                if (card.srsLevel === 5) srsColor = '#ea4335';
+                row.innerHTML = `
+                    <div>${card.front}</div>
+                    <div>${card.back}</div>
+                    <div style=\"color:#888;font-size:0.95em;\">${card.phonetic || ''}</div>
+                    <div><span class=\"lib-srs\" style=\"background:${srsColor};\">${card.srsLevel}</span></div>
+                `;
+                table.appendChild(row);
+            });
+            flashcardContainer.appendChild(table);
+        }
+        if (feedbackBtns) feedbackBtns.innerHTML = '';
+    }
+
+    function renderStats() {
+        // 1. Кольцевой прогресс-бар (курс)
+        const percent = Math.round((lessonsProgress.filter(x => x === true).length) / lessonsProgress.length * 100);
+        const percentEl = document.getElementById('courseProgressPercent');
+        if (percentEl) percentEl.textContent = percent + '%';
+        drawCircleProgress('courseProgressCircle', percent);
+
+        // 2. Стрик
+        const streakEl = document.getElementById('streakValue');
+        if (streakEl) streakEl.textContent = demoStreak;
+        // 2.1. Визуализация дней недели
+        const weekEl = document.getElementById('streakWeek');
+        if (weekEl) {
+            weekEl.innerHTML = '';
+            const days = ['Пн','Вт','Ср','Чт','Пт','Сб', 'Вс'];
+            const todayIdx = new Date().getDay(); // 0=Вс, 6=Сб
+            // Сдвигаем demoActivity и дни недели так, чтобы последний был сегодня
+            let activity7 = [];
+            let days7 = [];
+            for (let i = 6; i >= 0; --i) {
+                const d = (todayIdx - i + 7) % 7;
+                activity7.push(demoActivity[d]);
+                days7.push(days[d]);
+            }
+            for (let i = 0; i < 7; ++i) {
+                const day = document.createElement('div');
+                day.className = 'streak-day';
+                if (activity7[i] > 0) day.classList.add('active');
+                if (i === 6) day.classList.add('today');
+                day.textContent = days7[i];
+                weekEl.appendChild(day);
+            }
+        }
+        // 3. График активности (7 дней до сегодня)
+        let activity7 = [];
+        const todayIdx = new Date().getDay();
+        for (let i = 6; i >= 0; --i) {
+            const d = (todayIdx - i + 7) % 7;
+            activity7.push(demoActivity[d]);
+        }
+        drawActivityChart('activityChart', activity7);
+
+        // 4. Прогресс по категориям (по урокам)
+        const catBars = document.getElementById('catBars');
+        if (catBars) {
+            catBars.innerHTML = '';
+            lessonsData.forEach((lesson, idx) => {
+                const row = document.createElement('div');
+                row.className = 'cat-bar-row';
+                const title = document.createElement('div');
+                title.className = 'cat-bar-title';
+                title.textContent = lesson.title;
+                const bar = document.createElement('div');
+                bar.className = 'cat-bar';
+                const fill = document.createElement('div');
+                fill.className = 'cat-bar-fill';
+                fill.style.width = lessonsProgress[idx] === true ? '100%' : lessonsProgress[idx] === null ? '50%' : '0%';
+                bar.appendChild(fill);
+                const value = document.createElement('div');
+                value.className = 'cat-bar-value';
+                value.textContent = lessonsProgress[idx] === true ? '100%' : lessonsProgress[idx] === null ? '50%' : '0%';
+                row.appendChild(title);
+                row.appendChild(bar);
+                row.appendChild(value);
+                catBars.appendChild(row);
+            });
+        }
+
+        // --- ДЕМО-ДАННЫЕ ЛИДЕРБОРДА ---
+        renderLeaderboard(leaderboardWeek, 'leaderboardWeek');
+        renderLeaderboard(leaderboardMonth, 'leaderboardMonth');
+    }
+
+    // 3. Навигация и вызовы рендера
+    function renderTab(tabId) {
+        if (tabId === 'tab-lessons') {
+            renderLessonsPath();
+        } else if (tabId === 'tab-cards') {
+            renderFlashcardsSection();
+        } else if (tabId === 'tab-leaderboard') {
+            renderLeaderboard(leaderboardWeek, 'leaderboardWeek');
+            renderLeaderboard(leaderboardMonth, 'leaderboardMonth');
+        } else if (tabId === 'tab-profile') {
+            renderStats();
+        }
+    }
+
+    // --- Навигация ---
+    const navItems = document.querySelectorAll('.bottom-nav .nav-item');
+    const tabSections = document.querySelectorAll('.tab-section');
+
+    navItems.forEach(item => {
+        item.addEventListener('click', function() {
+            navItems.forEach(i => i.classList.remove('active'));
+            item.classList.add('active');
+            const tabId = item.getAttribute('data-tab');
+            tabSections.forEach(sec => {
+                if (sec.id === tabId) {
+                    sec.classList.add('active');
+                } else {
+                    sec.classList.remove('active');
+                }
+            });
+            renderTab(tabId);
+        });
+    });
+
+    // --- Инициализация при загрузке ---
+    renderLessonsPath();
+    renderFlashcardsSection();
+    renderLeaderboard(leaderboardWeek, 'leaderboardWeek');
+    renderLeaderboard(leaderboardMonth, 'leaderboardMonth');
+    renderStats();
+
+    // --- УРОКИ: пошаговый просмотр ---
+    let currentLessonIdx = 0;
+    let currentStep = 0;
+
+    // --- Модалка завершения урока ---
+    let lessonCompleteModal = document.getElementById('lesson-complete-modal');
+    if (!lessonCompleteModal) {
+        lessonCompleteModal = document.createElement('div');
+        lessonCompleteModal.id = 'lesson-complete-modal';
+        lessonCompleteModal.className = 'modal';
+        lessonCompleteModal.style.display = 'none';
+        lessonCompleteModal.innerHTML = `
+            <div class="modal-content">
+                <h2>Урок завершён!</h2>
+                <div style="font-size:1.2em;margin:18px 0;">Поздравляем! Вы успешно прошли урок 🎉</div>
+                <button id="close-lesson-complete">Закрыть</button>
+            </div>
+        `;
+        document.body.appendChild(lessonCompleteModal);
+        lessonCompleteModal.querySelector('#close-lesson-complete').onclick = () => {
+            lessonCompleteModal.style.display = 'none';
+        };
+    }
+
+    // --- Состояния заданий ---
+    let lessonAnswers = [];
+
+    // --- Новая логика уроков ---
+    function showLesson(idx) {
+        currentLessonIdx = idx;
+        currentStep = 0;
+        lessonAnswers = [null, null];
+        const lessonPage = document.querySelector('#tab-lessons .lesson-page');
+        lessonPage.innerHTML = `
+            <div class="lesson-duo-header"><div class="lesson-title"></div></div>
+            <div class="lesson-duo-container">
+                <div class="lesson-duo-content"></div>
+                <button class="lesson-duo-next-btn" disabled>Далее</button>
+            </div>
+        `;
+        lessonPage.style.display = 'block';
+        lessonPage.style.position = 'fixed';
+        lessonPage.style.top = '0';
+        lessonPage.style.left = '0';
+        lessonPage.style.right = '0';
+        lessonPage.style.bottom = '0';
+        lessonPage.style.width = '100vw';
+        lessonPage.style.height = '100vh';
+        lessonPage.style.background = '#fff';
+        lessonPage.style.zIndex = '1000';
+        lessonPage.style.overflow = 'hidden';
+        document.body.classList.add('lesson-open');
+        document.querySelector('#tab-lessons .lessons-path').style.display = 'none';
+        renderLessonStep();
+    }
+
+    function renderLessonStep() {
+        const lesson = lessonsData[currentLessonIdx];
+        const lessonPage = document.querySelector('#tab-lessons .lesson-page');
+        const header = lessonPage.querySelector('.lesson-duo-header .lesson-title');
+        const content = lessonPage.querySelector('.lesson-duo-content');
+        const nextBtn = lessonPage.querySelector('.lesson-duo-next-btn');
+        nextBtn.disabled = true;
+        nextBtn.classList.remove('success');
+        content.innerHTML = '';
+        header.textContent = lesson.title;
+        // Шаги: 0 — теория, 1 — задание 1, 2 — задание 2, 3 — новые слова
+        if (currentStep === 0) {
+            content.innerHTML = `<div class='lesson-theory-block'>${lesson.theory}</div>`;
+            nextBtn.disabled = false;
+        }
+        if (currentStep === 1 || currentStep === 2) {
+            const taskIdx = currentStep - 1;
+            const task = lesson.tasks[taskIdx];
+            content.innerHTML = `<div class='lesson-step-block'><div class='task-q'>${taskIdx+1}. ${task.question}</div></div>`;
+            const block = content.querySelector('.lesson-step-block');
+            task.options.forEach((opt, j) => {
+                const btn = document.createElement('button');
+                btn.className = 'task-opt-btn';
+                btn.textContent = opt;
+                btn.onclick = () => {
+                    if (j === task.answer) {
+                        btn.style.background = 'var(--secondary-color)';
+                        btn.style.color = '#fff';
+                        lessonAnswers[taskIdx] = true;
+                        nextBtn.disabled = false;
+                        nextBtn.classList.add('success');
+                        // Блокируем все кнопки
+                        Array.from(block.querySelectorAll('button')).forEach(b => b.disabled = true);
+                    } else {
+                        btn.style.background = 'var(--danger-color)';
+                        btn.style.color = '#fff';
+                        btn.disabled = true;
+                        lessonAnswers[taskIdx] = false;
+                    }
+                };
+                block.appendChild(btn);
+            });
+        }
+        if (currentStep === 3) {
+            let words = lesson.words || [];
+            if (!words.length && lesson.tasks) {
+                words = lesson.tasks.map(t => ({ front: t.question.replace(/Как будет |Как сказать |\?|"/g, '').trim(), back: t.options[t.answer], phonetic: '' }));
+            }
+            content.innerHTML = `<div class='lesson-newwords-title'>Новые слова:</div>` +
+                words.map(w => `<div class='lesson-newword'><b>${w.front}</b> — ${w.back} <span style='color:#888'>${w.phonetic||''}</span></div>`).join('');
+            nextBtn.textContent = 'Завершить';
+            nextBtn.disabled = false;
+            nextBtn.classList.remove('success');
+        } else {
+            nextBtn.textContent = 'Далее';
+        }
+        nextBtn.onclick = () => {
+            if (currentStep === 1 || currentStep === 2) {
+                if (lessonAnswers[currentStep-1] !== true) return;
+            }
+            if (currentStep < 3) {
+                currentStep++;
+                renderLessonStep();
+            } else {
+                // Добавляем новые слова в SRS
+                let words = lesson.words || [];
+                if (!words.length && lesson.tasks) {
+                    words = lesson.tasks.map(t => ({ front: t.question.replace(/Как будет |Как сказать |\?|"/g, '').trim(), back: t.options[t.answer], phonetic: '' }));
+                }
+                const today = new Date(); today.setHours(0,0,0,0);
+                words.forEach(w => {
+                    userFlashcards.push({
+                        ...w,
+                        srsLevel: 1,
+                        status: 'new',
+                        nextReview: new Date(today),
+                        stats: { correct: 0, incorrect: 0 }
+                    });
+                });
+                // Обновляем прогресс уроков и возвращаем к списку
+                lessonsProgress[currentLessonIdx] = true;
+                if (currentLessonIdx + 1 < lessonsProgress.length && lessonsProgress[currentLessonIdx + 1] === false) {
+                    lessonsProgress[currentLessonIdx + 1] = null;
+                }
+                renderLessonsPath();
+                closeLessonPage();
+                renderStats && renderStats();
+            }
+        };
+    }
+
+    // --- УРОКИ ---
+    const lessonsTab = document.getElementById('lessons-tab');
+    const lessonsPath = lessonsTab?.querySelector('.lessons-path');
+    const lessonLevels = lessonsTab?.querySelectorAll('.lesson-level');
+    const lessonPage = lessonsTab?.querySelector('.lesson-page');
+    const backToPathBtn = lessonsTab?.querySelector('.back-to-path');
+    const lessonTitle = lessonsTab?.querySelector('.lesson-title');
+    const lessonTheory = lessonsTab?.querySelector('.lesson-theory');
+    const lessonTasks = lessonsTab?.querySelector('.lesson-tasks');
+
+    // Открытие урока
+    lessonLevels?.forEach(level => {
+        level.addEventListener('click', function() {
+            if (level.classList.contains('locked')) return;
+            const idx = parseInt(level.getAttribute('data-lesson'));
+            showLesson(idx);
+        });
+    });
+
+    // Возврат к пути
+    backToPathBtn?.addEventListener('click', () => {
+        lessonPage.style.display = 'none';
+        lessonsPath.style.display = 'flex';
+    });
+
+    // Анимация прогресс-бара
+    const progressFill = document.querySelector('.progress-fill');
+    if (progressFill) {
+        let percent = 65; // Можно динамически менять
+        progressFill.style.width = '0%';
+        setTimeout(() => {
+            progressFill.style.transition = 'width 1s';
+            progressFill.style.width = percent + '%';
+        }, 300);
+    }
+
+    function drawCircleProgress(canvasId, percent) {
+        const canvas = document.getElementById(canvasId);
+        if (!canvas) return;
+        const ctx = canvas.getContext('2d');
+        ctx.clearRect(0,0,canvas.width,canvas.height);
+        // Фон
+        ctx.beginPath();
+        ctx.arc(55,55,48,0,2*Math.PI);
+        ctx.strokeStyle = '#e0e0e0';
+        ctx.lineWidth = 10;
+        ctx.stroke();
+        // Прогресс
+        ctx.beginPath();
+        ctx.arc(55,55,48,-Math.PI/2,2*Math.PI*percent/100-Math.PI/2);
+        ctx.strokeStyle = '#4285f4';
+        ctx.lineWidth = 10;
+        ctx.lineCap = 'round';
+        ctx.stroke();
+    }
+
+    function drawActivityChart(canvasId, data) {
+        const canvas = document.getElementById(canvasId);
+        if (!canvas) return;
+        const ctx = canvas.getContext('2d');
+        ctx.clearRect(0,0,canvas.width,canvas.height);
+        const w = canvas.width, h = canvas.height;
+        const barW = 18, gap = 12;
+        data.forEach((val, i) => {
+            ctx.fillStyle = '#4285f4';
+            ctx.fillRect(i*(barW+gap)+10, h-8-val*12, barW, val*12);
+            ctx.fillStyle = '#bbb';
+            ctx.fillText(['Вс','Пн','Вт','Ср','Чт','Пт','Сб'][i], i*(barW+gap)+13, h-2);
+        });
+    }
+
+    // --- Безопасно навешиваем обработчики на вкладки ---
+    const statsTab = document.querySelector('.module-card[data-tab-target="stats-tab"]');
+    if (statsTab) statsTab.addEventListener('click', renderStats);
+    const leaderboardTab = document.querySelector('.module-card[data-tab-target="leaderboard-tab"]');
+    if (leaderboardTab) leaderboardTab.addEventListener('click', function() {
+        renderLeaderboard(leaderboardWeek, 'leaderboardWeek');
+        renderLeaderboard(leaderboardMonth, 'leaderboardMonth');
+    });
+
+    // --- ПРОФИЛЬ ПОЛЬЗОВАТЕЛЯ ---
+    const profileIcon = document.querySelector('.profile-icon');
+    const profileModal = document.getElementById('profile-modal');
+    const closeProfileModal = document.getElementById('closeProfileModal');
+    const profileAvatarLarge = document.querySelector('.profile-avatar-large');
+    const profileNickname = document.getElementById('profileNickname');
+    const profileProgressFill = document.getElementById('profileProgressFill');
+    const profileProgressPercent = document.getElementById('profileProgressPercent');
+    const profileAbout = document.getElementById('profileAbout');
+
+    // Демо-данные профиля
+    const userProfile = {
+        avatar: 'A',
+        nickname: 'alexey_kz',
+        about: 'Люблю казахский язык и учусь каждый день!',
+    };
+
+    function openProfileModal() {
+        if (profileAvatarLarge) profileAvatarLarge.textContent = userProfile.avatar;
+        if (profileNickname) profileNickname.textContent = userProfile.nickname;
+        if (profileAbout) profileAbout.textContent = userProfile.about;
+        // Прогресс курса
+        const percent = Math.round((lessonsProgress.filter(x => x === true).length) / lessonsProgress.length * 100);
+        if (profileProgressFill) profileProgressFill.style.width = percent + '%';
+        if (profileProgressPercent) profileProgressPercent.textContent = percent + '%';
+        if (profileModal) profileModal.style.display = 'flex';
+    }
+    if (profileIcon) profileIcon.addEventListener('click', openProfileModal);
+    if (closeProfileModal) closeProfileModal.addEventListener('click', () => {
+        if (profileModal) profileModal.style.display = 'none';
+    });
+
+    // При закрытии урока (например, после модалки или возврата к списку) убираем класс
+    function closeLessonPage() {
+        const lessonPage = document.querySelector('#tab-lessons .lesson-page');
+        if (lessonPage) lessonPage.style.display = 'none';
+        document.querySelector('#tab-lessons .lessons-path').style.display = 'flex';
+        document.body.classList.remove('lesson-open');
+    }
+
+    // --- DEMO PRELOADER ---
+    const preloader = document.getElementById('preloader');
+    if (preloader) {
+        document.body.style.overflow = 'hidden';
+        setTimeout(() => {
+            preloader.classList.add('fade-out');
+            setTimeout(() => {
+                preloader.style.display = 'none';
+                document.body.style.overflow = '';
+            }, 800);
+        }, 5000);
+    }
+}); 

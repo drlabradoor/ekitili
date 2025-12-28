@@ -45,8 +45,8 @@
                 </div>
                 <div class="leaderboard-user" id="leaderboardUser">
                     <span class="leaderboard-user-label">Ваше место:</span>
-                    <span class="leaderboard-user-place" id="leaderboardUserPlace">12</span>
-                    <span class="leaderboard-user-points" id="leaderboardUserPoints">85★</span>
+                    <span class="leaderboard-user-place" id="leaderboardUserPlace">-</span>
+                    <span class="leaderboard-user-points" id="leaderboardUserPoints">0★</span>
                 </div>
             </section>
             <!-- Профиль + Статистика -->
@@ -185,6 +185,18 @@
             <div class="confirm-actions">
                 <button id="confirm-logout" class="logout-btn">Выйти</button>
                 <button id="cancel-logout" class="login-btn">Отмена</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Модальное окно запроса входа для теста -->
+    <div id="test-login-required-modal" class="auth-modal" style="display:none;">
+        <div class="confirm-modal-content">
+            <h3 class="confirm-title">Вход требуется</h3>
+            <p class="confirm-text">Для прохождения теста необходимо войти в систему.</p>
+            <div class="confirm-actions">
+                <button id="test-login-btn" class="login-btn">Войти</button>
+                <button id="test-cancel-btn" class="logout-btn" style="background: #999;">Отмена</button>
             </div>
         </div>
     </div>
