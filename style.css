@@ -2011,17 +2011,21 @@ body.lesson-open .app-header { display: none !important; }
 }
 /* Memory Game Styles */
 .games-container {
-    padding: 20px;
-    max-width: 600px;
-    margin: 0 auto;
+    padding: 10px;
+    width: 100%;
+    /* Occupy remaining height: 100dvh minus header (~60px) and bottom nav (~70px) and padding */
+    height: calc(100dvh - 130px); 
     display: flex;
     flex-direction: column;
     align-items: center;
+    justify-content: flex-start; 
 }
 
 .section-header {
     width: 100%;
-    margin-bottom: 20px;
+    max-width: 500px; /* Limit width of controls */
+    margin-bottom: 10px;
+    flex-shrink: 0;
 }
 
 .game-controls {
@@ -2029,14 +2033,14 @@ body.lesson-open .app-header { display: none !important; }
     justify-content: space-between;
     align-items: center;
     background: white;
-    padding: 15px;
+    padding: 10px 15px;
     border-radius: 12px;
     box-shadow: 0 4px 15px rgba(0,0,0,0.05);
-    margin-top: 10px;
 }
 
 #memory-game-status {
     font-weight: 600;
+    font-size: 0.9rem;
     color: var(--text-color, #333);
 }
 
@@ -2049,6 +2053,7 @@ body.lesson-open .app-header { display: none !important; }
     cursor: pointer;
     font-weight: 500;
     transition: transform 0.2s;
+    font-size: 0.9rem;
 }
 
 .action-btn:active {
@@ -2058,16 +2063,20 @@ body.lesson-open .app-header { display: none !important; }
 .memory-game-board {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
-    gap: 10px;
-    width: 100%;
+    gap: 8px;
+    /* Logic: Square board. Size = min(90% width, available height) */
+    width: min(92vw, calc(100dvh - 220px));
+    height: min(92vw, calc(100dvh - 220px));
     aspect-ratio: 1;
+    margin: auto 0; /* Center vertically if space exists */
 }
 
 .memory-card {
     background-color: transparent;
     perspective: 1000px;
     cursor: pointer;
-    aspect-ratio: 1;
+    width: 100%;
+    height: 100%;
 }
 
 .memory-card-inner {
@@ -2075,10 +2084,10 @@ body.lesson-open .app-header { display: none !important; }
     width: 100%;
     height: 100%;
     text-align: center;
-    transition: transform 0.6s;
+    transition: transform 0.4s;
     transform-style: preserve-3d;
-    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-    border-radius: 10px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    border-radius: 8px;
 }
 
 .memory-card.flipped .memory-card-inner {
@@ -2103,17 +2112,19 @@ body.lesson-open .app-header { display: none !important; }
     display: flex;
     align-items: center;
     justify-content: center;
-    border-radius: 10px;
+    border-radius: 8px;
     font-weight: bold;
-    font-size: 0.9rem;
-    padding: 5px;
+    padding: 4px;
     box-sizing: border-box;
+    /* Prevent text selection */
+    user-select: none;
+    -webkit-user-select: none;
 }
 
 .memory-card-front {
     background: linear-gradient(135deg, var(--primary-color, #4CAF50), var(--secondary-color, #2196F3));
     color: white;
-    font-size: 1.5rem;
+    font-size: clamp(1.2rem, 5vmin, 2.5rem); /* Responsive icon size */
 }
 
 .memory-card-back {
@@ -2122,5 +2133,8 @@ body.lesson-open .app-header { display: none !important; }
     transform: rotateY(180deg);
     border: 2px solid #eee;
     word-break: break-word;
+    line-height: 1.2;
+    /* Responsive text size: minimum 10px, preferred based on viewport, max 18px */
+    font-size: clamp(0.6rem, 2.5vmin, 1.1rem); 
 }
 
