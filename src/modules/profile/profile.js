@@ -5,7 +5,7 @@ import { getCourseProgressPercent } from '../../services/stats.js';
 import { logoutUser } from '../../services/auth.js';
 import { isAuthenticated } from '../../services/auth.js';
 import { showLogin } from '../auth/auth.js';
-import { updateProfileDisplay } from './profileRenderer.js';
+import { renderStats, updateProfileDisplay } from './profileRenderer.js';
 
 export function initProfile() {
     const profileIcon = document.querySelector('.profile-icon');
@@ -29,24 +29,24 @@ export function initProfile() {
         if (profileAvatarLarge) profileAvatarLarge.textContent = userProfile.avatar;
         if (profileNickname) profileNickname.textContent = userProfile.nickname;
         if (profileAbout) profileAbout.textContent = userProfile.about;
-        
+
         // Прогресс курса
         const percent = getCourseProgressPercent();
         if (profileProgressFill) profileProgressFill.style.width = percent + '%';
         if (profileProgressPercent) profileProgressPercent.textContent = percent + '%';
         if (profileModal) profileModal.style.display = 'flex';
     }
-    
+
     if (profileIcon) {
         profileIcon.addEventListener('click', openProfileModal);
     }
-    
+
     if (closeProfileModal) {
         closeProfileModal.addEventListener('click', () => {
             if (profileModal) profileModal.style.display = 'none';
         });
     }
-    
+
     // Обработчик кнопки входа
     if (loginBtn) {
         loginBtn.addEventListener('click', () => {
@@ -73,6 +73,7 @@ export function initProfile() {
             userProfile.avatar = 'G';
             userProfile.about = 'Войдите, чтобы начать обучение!';
             updateProfileDisplay();
+            renderStats(); // Сбросить ачивки и статистику
             // Обновляем кнопки профиля
             updateAuthButtons();
             // Закрываем модалку

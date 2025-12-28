@@ -1,6 +1,7 @@
 // Компонент теста для определения уровня знания казахского языка
 import { getCurrentUser, getApiBaseUrl } from '../../services/auth.js';
 import { showLogin } from '../auth/auth.js';
+import { unlockAchievement } from '../../services/achievements.js';
 
 const API_BASE_URL = getApiBaseUrl();
 
@@ -51,7 +52,7 @@ const levelTestQuestions = [
         correctAnswer: 0,
         level: 'beginner'
     },
-    
+
     // Средний уровень (B1-B2)
     {
         question: 'Как правильно сказать "Я учу казахский язык"?',
@@ -96,16 +97,16 @@ const levelTestQuestions = [
  */
 function generateTestQuestions() {
     testQuestions = [...levelTestQuestions];
-    
+
     // Перемешиваем вопросы
     for (let i = testQuestions.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1));
         [testQuestions[i], testQuestions[j]] = [testQuestions[j], testQuestions[i]];
     }
-    
+
     // Берем 8 вопросов (примерно половина от 15)
     testQuestions = testQuestions.slice(0, Math.min(8, testQuestions.length));
-    
+
     return testQuestions;
 }
 
@@ -114,7 +115,7 @@ function generateTestQuestions() {
  */
 function createTestModal() {
     if (testModal) return testModal;
-    
+
     testModal = document.createElement('div');
     testModal.id = 'test-modal';
     testModal.className = 'modal';
@@ -135,17 +136,17 @@ function createTestModal() {
         </div>
     `;
     document.body.appendChild(testModal);
-    
+
     // Обработчик крестика (закрытие без сохранения)
     testModal.querySelector('#test-close-x-btn').onclick = () => {
         closeTest();
     };
-    
+
     // Обработчик кнопки "Закрыть" на экране результатов
     testModal.querySelector('#test-close-btn').onclick = () => {
         closeTest();
     };
-    
+
     return testModal;
 }
 
@@ -155,14 +156,14 @@ function createTestModal() {
 function showLoginRequiredModal() {
     const loginModal = document.getElementById('test-login-required-modal');
     if (!loginModal) return;
-    
+
     loginModal.style.display = 'grid';
     document.body.style.overflow = 'hidden';
-    
+
     // Обработчики кнопок
     const loginBtn = document.getElementById('test-login-btn');
     const cancelBtn = document.getElementById('test-cancel-btn');
-    
+
     if (loginBtn) {
         loginBtn.onclick = () => {
             loginModal.style.display = 'none';
@@ -171,7 +172,7 @@ function showLoginRequiredModal() {
             showLogin();
         };
     }
-    
+
     if (cancelBtn) {
         cancelBtn.onclick = () => {
             loginModal.style.display = 'none';
@@ -189,24 +190,24 @@ export function showTest() {
         showLoginRequiredModal();
         return;
     }
-    
+
     // Генерируем вопросы
     generateTestQuestions();
-    
+
     if (testQuestions.length === 0) {
         alert('Нет доступных вопросов для теста.');
         return;
     }
-    
+
     // Сбрасываем состояние
     currentQuestionIndex = 0;
     testAnswers = [];
-    
+
     // Создаем и показываем модальное окно
     createTestModal();
     testModal.style.display = 'flex';
     document.body.style.overflow = 'hidden';
-    
+
     renderQuestion();
 }
 
@@ -218,24 +219,24 @@ function renderQuestion() {
         showResults();
         return;
     }
-    
+
     const question = testQuestions[currentQuestionIndex];
     const content = testModal.querySelector('#test-content');
     const progress = testModal.querySelector('#test-progress');
     const results = testModal.querySelector('#test-results');
-    
+
     results.style.display = 'none';
     content.style.display = 'block';
-    
+
     progress.textContent = `Вопрос ${currentQuestionIndex + 1} из ${testQuestions.length}`;
-    
+
     content.innerHTML = `
         <div class="test-question">${question.question}</div>
         <div class="test-options"></div>
     `;
-    
+
     const optionsContainer = content.querySelector('.test-options');
-    
+
     question.options.forEach((option, index) => {
         const btn = document.createElement('button');
         btn.className = 'task-opt-btn';
@@ -251,14 +252,14 @@ function renderQuestion() {
 function selectAnswer(selectedIndex) {
     const question = testQuestions[currentQuestionIndex];
     const isCorrect = selectedIndex === question.correctAnswer;
-    
+
     testAnswers.push({
         questionIndex: currentQuestionIndex,
         selectedAnswer: selectedIndex,
         correctAnswer: question.correctAnswer,
         isCorrect: isCorrect
     });
-    
+
     // Показываем правильный ответ
     const options = testModal.querySelectorAll('.task-opt-btn');
     options.forEach((btn, idx) => {
@@ -271,7 +272,7 @@ function selectAnswer(selectedIndex) {
             btn.style.color = '#fff';
         }
     });
-    
+
     // Переходим к следующему вопросу через 1 секунду
     setTimeout(() => {
         currentQuestionIndex++;
@@ -286,14 +287,14 @@ async function showResults() {
     const content = testModal.querySelector('#test-content');
     const results = testModal.querySelector('#test-results');
     const scoreEl = testModal.querySelector('#test-score');
-    
+
     content.style.display = 'none';
     results.style.display = 'block';
-    
+
     const correctAnswers = testAnswers.filter(a => a.isCorrect).length;
     const totalQuestions = testQuestions.length;
     const percentage = Math.round((correctAnswers / totalQuestions) * 100);
-    
+
     scoreEl.innerHTML = `
         <div style="font-size: 2em; margin: 20px 0;">
             ${correctAnswers} из ${totalQuestions}
@@ -302,7 +303,10 @@ async function showResults() {
             ${percentage}% правильных ответов
         </div>
     `;
-    
+
+    // Разблокируем достижение "Полиглот"
+    unlockAchievement('polyglot');
+
     // Сохраняем результат на сервер
     const user = getCurrentUser();
     if (user && user.userId) {
@@ -318,7 +322,7 @@ async function showResults() {
                     total_questions: totalQuestions
                 })
             });
-            
+
             if (response.ok) {
                 console.log('Test result saved successfully');
                 // Обновляем лидерборд

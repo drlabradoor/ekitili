@@ -1,4 +1,5 @@
 import { flashcardsData, userFlashcards } from '../../data/flashcards.js';
+import { unlockAchievement } from '../../services/achievements.js';
 
 let gameActive = false;
 let cards = [];
@@ -173,6 +174,9 @@ function checkMatch() {
 function handleWin() {
     const statusEl = document.getElementById('memory-game-status');
     if (statusEl) statusEl.innerHTML = '🎉 Победа! Молодец! <br>Нажми "Заново" для новой игры.';
+
+    // Разблокировать достижение "Мастер Памяти"
+    unlockAchievement('memory_master');
 
     // Можно добавить начисление очков здесь
     gameActive = false;

@@ -7,12 +7,12 @@ export function getApiBaseUrl() {
     if (typeof window === 'undefined') {
         return 'http://localhost:3000/api';
     }
-    
+
     // Если открыто через file:// или hostname пустой, используем localhost
     if (window.location.protocol === 'file:' || !window.location.hostname || window.location.hostname === '') {
         return 'http://localhost:3000/api';
     }
-    
+
     // Используем hostname текущей страницы
     return `http://${window.location.hostname}:3000/api`;
 }
@@ -52,13 +52,13 @@ export async function registerUser(username, password) {
     try {
         // Пытаемся захешировать пароль на клиенте
         const passwordHash = await hashPassword(password);
-        
+
         // Отправляем запрос на регистрацию
         // Если passwordHash === null, сервер захеширует пароль сам
-        const requestBody = passwordHash 
+        const requestBody = passwordHash
             ? { username, password_hash: passwordHash }
             : { username, password };
-        
+
         const response = await fetch(`${API_BASE_URL}/register`, {
             method: 'POST',
             headers: {
@@ -66,16 +66,16 @@ export async function registerUser(username, password) {
             },
             body: JSON.stringify(requestBody)
         });
-        
+
         const data = await response.json();
-        
+
         if (!response.ok) {
             return {
                 success: false,
                 error: data.error || 'Ошибка при регистрации'
             };
         }
-        
+
         return {
             success: true,
             userId: data.user_id,
@@ -102,13 +102,13 @@ export async function loginUser(username, password) {
     try {
         // Пытаемся захешировать пароль на клиенте
         const passwordHash = await hashPassword(password);
-        
+
         // Отправляем запрос на вход
         // Если passwordHash === null, сервер захеширует пароль сам
-        const requestBody = passwordHash 
+        const requestBody = passwordHash
             ? { username, password_hash: passwordHash }
             : { username, password };
-        
+
         const response = await fetch(`${API_BASE_URL}/login`, {
             method: 'POST',
             headers: {
@@ -116,16 +116,16 @@ export async function loginUser(username, password) {
             },
             body: JSON.stringify(requestBody)
         });
-        
+
         const data = await response.json();
-        
+
         if (!response.ok) {
             return {
                 success: false,
                 error: data.error || 'Неверное имя пользователя или пароль'
             };
         }
-        
+
         return {
             success: true,
             userId: data.user_id,
@@ -142,6 +142,8 @@ export async function loginUser(username, password) {
     }
 }
 
+import { resetUserProfile } from '../data/user.js';
+
 /**
  * Выход пользователя
  */
@@ -149,6 +151,9 @@ export function logoutUser() {
     localStorage.removeItem('user');
     localStorage.removeItem('userId');
     localStorage.removeItem('username');
+
+    // Сбрасываем профиль в памяти
+    resetUserProfile();
 }
 
 /**
@@ -158,14 +163,14 @@ export function logoutUser() {
 export function getCurrentUser() {
     const userId = localStorage.getItem('userId');
     const username = localStorage.getItem('username');
-    
+
     if (userId && username) {
         return {
             userId: parseInt(userId),
             username: username
         };
     }
-    
+
     return null;
 }
 
@@ -201,7 +206,7 @@ export async function checkApiConnection() {
                 'Content-Type': 'application/json',
             }
         });
-        
+
         if (response.ok) {
             const data = await response.json();
             console.log('✓ API сервер доступен:', data);

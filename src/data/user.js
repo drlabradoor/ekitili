@@ -1,5 +1,7 @@
 // Данные пользователя
+// Данные пользователя
 import { getCurrentUser } from '../services/auth.js';
+import { loadUserAchievements } from '../services/achievements.js';
 
 // Получаем данные пользователя из localStorage или используем дефолтные
 const currentUser = getCurrentUser();
@@ -9,7 +11,19 @@ export let userProfile = {
     avatar: getAvatarFromNickname(defaultNickname),
     nickname: defaultNickname,
     about: 'Люблю казахский язык и учусь каждый день!',
+    achievements: [] // Список ID полученных достижений
 };
+
+/**
+ * Сохранить профиль пользователя (экспорт для использования в других модулях)
+ */
+export function saveUserProfile() {
+    const userData = {
+        ...userProfile,
+        updatedAt: new Date().toISOString()
+    };
+    localStorage.setItem('userProfile', JSON.stringify(userData));
+}
 
 /**
  * Получить первую букву никнейма для аватара
@@ -25,13 +39,13 @@ function getAvatarFromNickname(nickname) {
  */
 export function updateUserProfile(username) {
     if (!username) return;
-    
+
     userProfile = {
         ...userProfile,
         avatar: getAvatarFromNickname(username),
         nickname: username
     };
-    
+
     // Сохраняем в localStorage для восстановления при перезагрузке
     const userData = {
         ...userProfile,
@@ -54,7 +68,7 @@ export function loadUserProfile() {
         };
         return;
     }
-    
+
     // Пытаемся загрузить сохранённый профиль
     const savedProfile = localStorage.getItem('userProfile');
     if (savedProfile) {
@@ -75,6 +89,9 @@ export function loadUserProfile() {
         // Если профиль не сохранён, обновляем с текущим пользователем
         updateUserProfile(currentUser.username);
     }
+
+    // Загружаем достижения с сервера
+    loadUserAchievements();
 }
 
 // Стрик: 12 дней подряд
@@ -82,4 +99,17 @@ export let demoStreak = 12;
 
 // Активность по дням (7 дней)
 export let demoActivity = [2, 3, 1, 4, 2, 6, 1];
+
+/**
+ * Сбросить данные профиля (при выходе)
+ */
+export function resetUserProfile() {
+    userProfile = {
+        avatar: 'G',
+        nickname: 'Гость',
+        about: 'Войдите, чтобы начать обучение!',
+        achievements: []
+    };
+    localStorage.removeItem('userProfile');
+}
 
