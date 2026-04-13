@@ -313,11 +313,11 @@ async function showResults() {
         try {
             const response = await fetch(`${API_BASE_URL}/test-result`, {
                 method: 'POST',
+                credentials: 'include',
                 headers: {
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
-                    user_id: user.userId,
                     score: correctAnswers,
                     total_questions: totalQuestions
                 })

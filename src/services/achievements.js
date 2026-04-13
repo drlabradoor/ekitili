@@ -79,11 +79,9 @@ async function saveAchievementsToServer() {
     try {
         await fetch(`${API_BASE_URL}/user/achievements`, {
             method: 'POST',
+            credentials: 'include',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                user_id: user.userId,
-                achievements: userProfile.achievements
-            })
+            body: JSON.stringify({ achievements: userProfile.achievements })
         });
     } catch (error) {
         console.error('Error saving achievements:', error);
@@ -95,7 +93,7 @@ export async function loadUserAchievements() {
     if (!user || !user.userId) return;
 
     try {
-        const response = await fetch(`${API_BASE_URL}/user/${user.userId}/achievements`);
+        const response = await fetch(`${API_BASE_URL}/user/achievements`, { credentials: 'include' });
         if (response.ok) {
             const data = await response.json();
             if (data.achievements) {

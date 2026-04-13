@@ -33,7 +33,7 @@ async function loadUserLeaderboardData() {
     }
     
     try {
-        const response = await fetch(`${API_BASE_URL}/leaderboard/user/${user.userId}`);
+        const response = await fetch(`${API_BASE_URL}/leaderboard/me`, { credentials: 'include' });
         if (response.ok) {
             const data = await response.json();
             const userPlace = document.getElementById('leaderboardUserPlace');

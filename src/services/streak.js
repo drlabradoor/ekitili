@@ -205,8 +205,9 @@ async function syncStreakToServer(data) {
     try {
         await fetch(`${getApiBaseUrl()}/user/streak`, {
             method: 'POST',
+            credentials: 'include',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ user_id: user.userId, streak: data })
+            body: JSON.stringify({ streak: data })
         });
     } catch (error) {
         console.error('Ошибка синхронизации стрика:', error);
@@ -223,7 +224,7 @@ export async function loadStreakFromServer() {
     if (!user || !user.userId) return;
 
     try {
-        const response = await fetch(`${getApiBaseUrl()}/user/${user.userId}/streak`);
+        const response = await fetch(`${getApiBaseUrl()}/user/streak`, { credentials: 'include' });
         if (!response.ok) return;
         const payload = await response.json();
         const serverStreak = payload && payload.streak ? payload.streak : null;

@@ -1,6 +1,6 @@
 {
   "name": "ekitili",
-  "version": "0.8.0",
+  "version": "0.8.1",
   "description": "EkiTili - Приложение для изучения казахского языка",
   "main": "server.js",
   "scripts": {
@@ -17,10 +17,12 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "express": "^4.18.2",
+    "bcrypt": "^6.0.0",
+    "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",
-    "pg": "^8.13.1",
-    "dotenv": "^16.4.5"
+    "dotenv": "^16.4.5",
+    "express": "^4.18.2",
+    "express-rate-limit": "^8.3.2",
+    "pg": "^8.13.1"
   }
 }
-
