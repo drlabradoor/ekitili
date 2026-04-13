@@ -1,131 +1,99 @@
 // Бэкенд сервер для EkiTili
-// Подключение к Oracle Database и API для регистрации/входа
+// PostgreSQL / Supabase + API для регистрации/входа/достижений/лидерборда
+
+require('dotenv').config();
 
 const express = require('express');
 const cors = require('cors');
-const oracledb = require('oracledb');
+const { Pool } = require('pg');
 const path = require('path');
 const os = require('os');
 const crypto = require('crypto');
 
 const app = express();
-const PORT = 3000;
+const PORT = parseInt(process.env.PORT, 10) || 3000;
 
 // Middleware
 app.use(cors());
 app.use(express.json());
-
-// Раздача статических файлов
 app.use(express.static(path.join(__dirname)));
 
-// Настройка подключения к Oracle
-// Измените эти параметры под вашу конфигурацию Oracle
-const dbConfig = {
-    user: process.env.ORACLE_USER || 'SYSTEM',
-    password: process.env.ORACLE_PASSWORD || 'system228',
-    connectString: process.env.ORACLE_CONNECTION_STRING || 'localhost:1521/XE',
-    autoCommit: false, // Управляем коммитами вручную
-    stmtCacheSize: 30
-};
+// =====================================================
+// PostgreSQL (Supabase) connection pool
+// =====================================================
+// Читаем настройки из env: PGHOST / PGPORT / PGUSER / PGPASSWORD / PGDATABASE
+// Supabase требует SSL — включаем всегда.
+const pool = new Pool({
+    host: process.env.PGHOST,
+    port: parseInt(process.env.PGPORT, 10) || 5432,
+    user: process.env.PGUSER,
+    password: process.env.PGPASSWORD,
+    database: process.env.PGDATABASE,
+    ssl: { rejectUnauthorized: false },
+    max: 10,
+    idleTimeoutMillis: 30000,
+    connectionTimeoutMillis: 10000
+});
 
-// Инициализация Oracle Client
-let oracleInitialized = false;
+let dbReady = false;
 
-async function initializeOracle() {
+pool.on('error', (err) => {
+    console.error('Unexpected PG pool error:', err.message);
+});
+
+async function testConnection() {
     try {
-        // Попытка инициализации Oracle Client
-        // Если не установлен, будет ошибка, но приложение продолжит работу
-        await oracledb.initOracleClient();
-        oracleInitialized = true;
-        console.log('✓ Oracle Client initialized');
-    } catch (error) {
-        console.warn('⚠ Oracle Client not found. Install Oracle Instant Client to work with database.');
-        console.warn('  Download: https://www.oracle.com/database/technologies/instant-client/downloads.html');
-        oracleInitialized = false;
+        const { rows } = await pool.query('SELECT NOW() as now');
+        dbReady = true;
+        console.log(`✓ PostgreSQL connected (server time: ${rows[0].now})`);
+        return true;
+    } catch (err) {
+        dbReady = false;
+        console.error('✗ PostgreSQL connection failed:', err.message);
+        return false;
     }
 }
 
-// Хеширование пароля на сервере (SHA-256)
+// Хеширование пароля на сервере (SHA-256) — оставляем двойной хеш клиент+сервер,
+// чтобы не ломать уже работающий фронт.
 function hashPassword(password) {
     return crypto.createHash('sha256').update(password).digest('hex');
 }
 
-// Проверка подключения к базе данных
-async function testConnection() {
-    if (!oracleInitialized) {
-        return false;
-    }
-
-    try {
-        const connection = await oracledb.getConnection(dbConfig);
-        await connection.close();
-        console.log('✓ Connection to Oracle Database successful');
-        return true;
-    } catch (error) {
-        console.error('✗ Error connecting to Oracle Database:', error.message);
-        console.error('  Check connection parameters in server.js');
-        return false;
-    }
+function dbUnavailable(res) {
+    return res.status(503).json({ error: 'Database unavailable. Check Supabase connection.' });
 }
 
+// =====================================================
 // API: Регистрация пользователя
+// =====================================================
 app.post('/api/register', async (req, res) => {
-    if (!oracleInitialized) {
-        return res.status(503).json({
-            error: 'Database unavailable. Install Oracle Instant Client and check connection.'
-        });
-    }
+    if (!dbReady) return dbUnavailable(res);
 
     try {
         const { username, password, password_hash } = req.body;
-
         if (!username || (!password && !password_hash)) {
             return res.status(400).json({ error: 'Username and password are required' });
         }
 
-        // Хешируем пароль на сервере (если передан обычный пароль)
         const hashedPassword = password ? hashPassword(password) : password_hash;
 
-        const connection = await oracledb.getConnection(dbConfig);
-
         try {
-            // Вызываем процедуру REGISTER_USER
-            await connection.execute(
-                `BEGIN REGISTER_USER(:username, :password_hash); END;`,
-                {
-                    username: username,
-                    password_hash: hashedPassword
-                }
+            const { rows } = await pool.query(
+                `INSERT INTO user_accounts (username, password_hash)
+                 VALUES ($1, $2)
+                 RETURNING user_id, username`,
+                [username, hashedPassword]
             );
-
-            // Коммитим транзакцию
-            await connection.commit();
-
-            // Получаем ID созданного пользователя
-            const result = await connection.execute(
-                `SELECT USER_ID FROM USER_ACCOUNTS WHERE USERNAME = :username`,
-                { username: username },
-                { outFormat: oracledb.OUT_FORMAT_ARRAY }
-            );
-
-            const userId = result.rows[0][0];
-
-            res.json({
-                user_id: userId,
-                username: username
-            });
+            const row = rows[0];
+            res.json({ user_id: Number(row.user_id), username: row.username });
         } catch (dbError) {
-            await connection.rollback();
-
-            // Обработка ошибок Oracle
-            if (dbError.errorNum === 1) {
-                // ORA-00001: unique constraint violated
-                res.status(400).json({ error: 'User with this username already exists' });
-            } else {
-                res.status(400).json({ error: dbError.message || 'Registration error' });
+            // 23505 = unique_violation
+            if (dbError.code === '23505') {
+                return res.status(400).json({ error: 'User with this username already exists' });
             }
-        } finally {
-            await connection.close();
+            console.error('Register DB error:', dbError);
+            res.status(400).json({ error: dbError.message || 'Registration error' });
         }
     } catch (error) {
         console.error('Registration error:', error);
@@ -133,178 +101,128 @@ app.post('/api/register', async (req, res) => {
     }
 });
 
+// =====================================================
 // API: Вход пользователя
+// =====================================================
 app.post('/api/login', async (req, res) => {
-    if (!oracleInitialized) {
-        return res.status(503).json({
-            error: 'Database unavailable. Install Oracle Instant Client and check connection.'
-        });
-    }
+    if (!dbReady) return dbUnavailable(res);
 
     try {
         const { username, password, password_hash } = req.body;
-
         if (!username || (!password && !password_hash)) {
             return res.status(400).json({ error: 'Username and password are required' });
         }
 
-        // Хешируем пароль на сервере (если передан обычный пароль)
         const hashedPassword = password ? hashPassword(password) : password_hash;
 
-        const connection = await oracledb.getConnection(dbConfig);
+        const { rows } = await pool.query(
+            `SELECT user_id, username
+             FROM user_accounts
+             WHERE username = $1 AND password_hash = $2`,
+            [username, hashedPassword]
+        );
 
-        try {
-            // Вызываем функцию AUTHENTICATE_USER
-            const result = await connection.execute(
-                `SELECT AUTHENTICATE_USER(:username, :password_hash) as user_id FROM DUAL`,
-                {
-                    username: username,
-                    password_hash: hashedPassword
-                }
-            );
-
-            const userId = result.rows[0][0];
-
-            if (userId) {
-                res.json({
-                    user_id: userId,
-                    username: username
-                });
-            } else {
-                res.status(401).json({ error: 'Invalid username or password' });
-            }
-        } catch (dbError) {
-            res.status(401).json({ error: 'Invalid username or password' });
-        } finally {
-            await connection.close();
+        if (rows.length === 0) {
+            return res.status(401).json({ error: 'Invalid username or password' });
         }
+
+        res.json({ user_id: Number(rows[0].user_id), username: rows[0].username });
     } catch (error) {
         console.error('Login error:', error);
         res.status(500).json({ error: 'Internal server error' });
     }
 });
 
+// =====================================================
 // API: Сохранение результата теста
+// =====================================================
 app.post('/api/test-result', async (req, res) => {
-    if (!oracleInitialized) {
-        return res.status(503).json({
-            error: 'Database unavailable. Install Oracle Instant Client and check connection.'
-        });
-    }
+    if (!dbReady) return dbUnavailable(res);
 
     try {
         const { user_id, score, total_questions } = req.body;
-
         if (!user_id || score === undefined || !total_questions) {
             return res.status(400).json({ error: 'user_id, score, and total_questions are required' });
         }
 
-        const connection = await oracledb.getConnection(dbConfig);
+        await pool.query(
+            `INSERT INTO test_results (user_id, score, total_questions)
+             VALUES ($1, $2, $3)`,
+            [user_id, score, total_questions]
+        );
 
-        try {
-            // Вызываем процедуру SAVE_TEST_RESULT
-            await connection.execute(
-                `BEGIN SAVE_TEST_RESULT(:user_id, :score, :total_questions); END;`,
-                {
-                    user_id: user_id,
-                    score: score,
-                    total_questions: total_questions
-                }
-            );
-
-            await connection.commit();
-
-            res.json({
-                success: true,
-                message: 'Test result saved successfully'
-            });
-        } catch (dbError) {
-            await connection.rollback();
-            res.status(400).json({ error: dbError.message || 'Error saving test result' });
-        } finally {
-            await connection.close();
-        }
+        res.json({ success: true, message: 'Test result saved successfully' });
     } catch (error) {
         console.error('Save test result error:', error);
         res.status(500).json({ error: 'Internal server error' });
     }
 });
 
-// API: Выдача достижения (Atomic Grant)
+// =====================================================
+// API: Выдача одного достижения (atomic grant через read-modify-write в транзакции)
+// =====================================================
 app.post('/api/user/achievement/grant', async (req, res) => {
-    if (!oracleInitialized) {
-        return res.status(503).json({ error: 'Database unavailable' });
+    if (!dbReady) return dbUnavailable(res);
+
+    const { user_id, achievement_id } = req.body;
+    if (!user_id || !achievement_id) {
+        return res.status(400).json({ error: 'user_id and achievement_id required' });
     }
 
+    const client = await pool.connect();
     try {
-        const { user_id, achievement_id } = req.body;
-        if (!user_id || !achievement_id) {
-            return res.status(400).json({ error: 'user_id and achievement_id required' });
+        await client.query('BEGIN');
+
+        const { rows } = await client.query(
+            `SELECT achievements FROM user_accounts WHERE user_id = $1 FOR UPDATE`,
+            [user_id]
+        );
+
+        if (rows.length === 0) {
+            await client.query('ROLLBACK');
+            return res.status(404).json({ error: 'User not found' });
         }
 
-        const connection = await oracledb.getConnection(dbConfig);
-        try {
-            // 1. Получаем текущий список
-            const result = await connection.execute(
-                `SELECT ACHIEVEMENTS FROM USER_ACCOUNTS WHERE USER_ID = :id`,
-                { id: user_id }
-            );
+        // pg отдаёт jsonb как уже распарсенный JS-объект
+        const current = Array.isArray(rows[0].achievements) ? rows[0].achievements : [];
 
-            if (result.rows.length === 0) {
-                return res.status(404).json({ error: 'User not found' });
-            }
+        const exists = current.find(a =>
+            (typeof a === 'string' && a === achievement_id) ||
+            (typeof a === 'object' && a && a.id === achievement_id)
+        );
 
-            let currentAchievements = [];
-            const jsonStr = result.rows[0][0];
-            try {
-                if (jsonStr) currentAchievements = JSON.parse(jsonStr);
-            } catch (e) {
-                console.error('JSON parse error', e);
-            }
-
-            // 2. Проверяем наличие
-            const exists = currentAchievements.find(a =>
-                (typeof a === 'string' && a === achievement_id) ||
-                (typeof a === 'object' && a.id === achievement_id)
-            );
-
-            if (exists) {
-                return res.json({ success: true, message: 'Achievement already granted' });
-            }
-
-            // 3. Добавляем новое
-            currentAchievements.push({
-                id: achievement_id,
-                awardedDate: new Date().toISOString(),
-                progress: 1
-            });
-
-            // 4. Сохраняем
-            const newJsonStr = JSON.stringify(currentAchievements);
-            await connection.execute(
-                `UPDATE USER_ACCOUNTS SET ACHIEVEMENTS = :json WHERE USER_ID = :id`,
-                { json: newJsonStr, id: user_id }
-            );
-            await connection.commit();
-
-            res.json({ success: true, achievement: achievement_id });
-        } catch (dbError) {
-            await connection.rollback();
-            res.status(500).json({ error: dbError.message });
-        } finally {
-            await connection.close();
+        if (exists) {
+            await client.query('COMMIT');
+            return res.json({ success: true, message: 'Achievement already granted' });
         }
+
+        current.push({
+            id: achievement_id,
+            awardedDate: new Date().toISOString(),
+            progress: 1
+        });
+
+        await client.query(
+            `UPDATE user_accounts SET achievements = $1::jsonb WHERE user_id = $2`,
+            [JSON.stringify(current), user_id]
+        );
+        await client.query('COMMIT');
+
+        res.json({ success: true, achievement: achievement_id });
     } catch (error) {
+        await client.query('ROLLBACK').catch(() => {});
         console.error('Grant achievement error:', error);
-        res.status(500).json({ error: 'Internal server error' });
+        res.status(500).json({ error: error.message || 'Internal server error' });
+    } finally {
+        client.release();
     }
 });
 
-// API: Сохранение достижений пользователя (JSON Blob/Full Sync)
+// =====================================================
+// API: Полная синхронизация списка достижений (JSON blob overwrite)
+// =====================================================
 app.post('/api/user/achievements', async (req, res) => {
-    if (!oracleInitialized) {
-        return res.status(503).json({ error: 'Database unavailable' });
-    }
+    if (!dbReady) return dbUnavailable(res);
 
     try {
         const { user_id, achievements } = req.body;
@@ -312,226 +230,194 @@ app.post('/api/user/achievements', async (req, res) => {
             return res.status(400).json({ error: 'user_id and achievements array required' });
         }
 
-        const connection = await oracledb.getConnection(dbConfig);
-        try {
-            const jsonStr = JSON.stringify(achievements);
-            await connection.execute(
-                `UPDATE USER_ACCOUNTS SET ACHIEVEMENTS = :json WHERE USER_ID = :id`,
-                { json: jsonStr, id: user_id }
-            );
-            await connection.commit();
-            res.json({ success: true });
-        } catch (dbError) {
-            await connection.rollback();
-            res.status(500).json({ error: dbError.message });
-        } finally {
-            await connection.close();
-        }
+        await pool.query(
+            `UPDATE user_accounts SET achievements = $1::jsonb WHERE user_id = $2`,
+            [JSON.stringify(achievements), user_id]
+        );
+        res.json({ success: true });
     } catch (error) {
         console.error('Save achievements error:', error);
         res.status(500).json({ error: 'Internal server error' });
     }
 });
 
-// API: Получение достижений пользователя (JSON Blob)
+// =====================================================
+// API: Получение достижений пользователя
+// =====================================================
 app.get('/api/user/:userId/achievements', async (req, res) => {
-    if (!oracleInitialized) {
-        return res.status(503).json({ error: 'Database unavailable' });
-    }
+    if (!dbReady) return dbUnavailable(res);
 
     try {
-        const userId = req.params.userId;
-        const connection = await oracledb.getConnection(dbConfig);
-        try {
-            const result = await connection.execute(
-                `SELECT ACHIEVEMENTS FROM USER_ACCOUNTS WHERE USER_ID = :id`,
-                { id: userId }
-            );
+        const userId = parseInt(req.params.userId, 10);
+        if (!userId) return res.status(400).json({ error: 'Invalid userId' });
 
-            if (result.rows.length > 0) {
-                const jsonStr = result.rows[0][0];
-                let achievements = [];
-                try {
-                    achievements = jsonStr ? JSON.parse(jsonStr) : [];
-                } catch (e) {
-                    console.error('JSON parse error', e);
-                }
-                res.json({ achievements });
-            } else {
-                res.status(404).json({ error: 'User not found' });
-            }
-        } finally {
-            await connection.close();
+        const { rows } = await pool.query(
+            `SELECT achievements FROM user_accounts WHERE user_id = $1`,
+            [userId]
+        );
+
+        if (rows.length === 0) {
+            return res.status(404).json({ error: 'User not found' });
         }
+
+        const achievements = Array.isArray(rows[0].achievements) ? rows[0].achievements : [];
+        res.json({ achievements });
     } catch (error) {
         console.error('Get achievements error:', error);
         res.status(500).json({ error: 'Internal server error' });
     }
 });
 
-// API: Получение лидерборда за неделю
+// =====================================================
+// API: Получение стрика пользователя
+// =====================================================
+app.get('/api/user/:userId/streak', async (req, res) => {
+    if (!dbReady) return dbUnavailable(res);
+
+    try {
+        const userId = parseInt(req.params.userId, 10);
+        if (!userId) return res.status(400).json({ error: 'Invalid userId' });
+
+        const { rows } = await pool.query(
+            `SELECT streak FROM user_accounts WHERE user_id = $1`,
+            [userId]
+        );
+
+        if (rows.length === 0) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+
+        const streak = (rows[0].streak && typeof rows[0].streak === 'object') ? rows[0].streak : {};
+        res.json({ streak });
+    } catch (error) {
+        console.error('Get streak error:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+// =====================================================
+// API: Сохранение стрика (full overwrite jsonb blob)
+// =====================================================
+app.post('/api/user/streak', async (req, res) => {
+    if (!dbReady) return dbUnavailable(res);
+
+    try {
+        const { user_id, streak } = req.body;
+        if (!user_id || !streak || typeof streak !== 'object') {
+            return res.status(400).json({ error: 'user_id and streak object required' });
+        }
+
+        await pool.query(
+            `UPDATE user_accounts SET streak = $1::jsonb WHERE user_id = $2`,
+            [JSON.stringify(streak), user_id]
+        );
+        res.json({ success: true });
+    } catch (error) {
+        console.error('Save streak error:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+// =====================================================
+// Лидерборд: общий SQL для недели/месяца
+// =====================================================
+async function fetchLeaderboard(intervalDays) {
+    const { rows } = await pool.query(
+        `SELECT u.username AS name,
+                COALESCE(SUM(t.score), 0)::int AS points
+         FROM user_accounts u
+         LEFT JOIN test_results t
+                ON u.user_id = t.user_id
+               AND t.test_date >= NOW() - ($1::int || ' days')::interval
+         GROUP BY u.user_id, u.username
+         HAVING COALESCE(SUM(t.score), 0) > 0
+         ORDER BY points DESC
+         LIMIT 10`,
+        [intervalDays]
+    );
+    return rows.map(r => ({ name: r.name, points: r.points || 0 }));
+}
+
 app.get('/api/leaderboard/week', async (req, res) => {
-    if (!oracleInitialized) {
-        return res.status(503).json({
-            error: 'Database unavailable. Install Oracle Instant Client and check connection.'
-        });
-    }
-
+    if (!dbReady) return dbUnavailable(res);
     try {
-        const connection = await oracledb.getConnection(dbConfig);
-
-        try {
-            // Используем прямой SQL запрос вместо функции с курсором
-            const result = await connection.execute(
-                `SELECT 
-                    u.USERNAME as name,
-                    NVL(SUM(t.SCORE), 0) as points
-                FROM USER_ACCOUNTS u
-                LEFT JOIN TEST_RESULTS t ON u.USER_ID = t.USER_ID AND t.TEST_DATE >= SYSDATE - 7
-                GROUP BY u.USER_ID, u.USERNAME
-                HAVING NVL(SUM(t.SCORE), 0) > 0
-                ORDER BY points DESC
-                FETCH FIRST 10 ROWS ONLY`,
-                {},
-                { outFormat: oracledb.OUT_FORMAT_OBJECT }
-            );
-
-            const leaderboard = result.rows.map(row => ({
-                name: row.NAME,
-                points: row.POINTS || 0
-            }));
-
-            res.json(leaderboard);
-        } catch (dbError) {
-            res.status(400).json({ error: dbError.message || 'Error fetching leaderboard' });
-        } finally {
-            await connection.close();
-        }
+        res.json(await fetchLeaderboard(7));
     } catch (error) {
-        console.error('Get leaderboard error:', error);
+        console.error('Get week leaderboard error:', error);
         res.status(500).json({ error: 'Internal server error' });
     }
 });
 
-// API: Получение лидерборда за месяц
 app.get('/api/leaderboard/month', async (req, res) => {
-    if (!oracleInitialized) {
-        return res.status(503).json({
-            error: 'Database unavailable. Install Oracle Instant Client and check connection.'
-        });
-    }
-
+    if (!dbReady) return dbUnavailable(res);
     try {
-        const connection = await oracledb.getConnection(dbConfig);
-
-        try {
-            // Используем прямой SQL запрос вместо функции с курсором
-            const result = await connection.execute(
-                `SELECT 
-                    u.USERNAME as name,
-                    NVL(SUM(t.SCORE), 0) as points
-                FROM USER_ACCOUNTS u
-                LEFT JOIN TEST_RESULTS t ON u.USER_ID = t.USER_ID AND t.TEST_DATE >= SYSDATE - 30
-                GROUP BY u.USER_ID, u.USERNAME
-                HAVING NVL(SUM(t.SCORE), 0) > 0
-                ORDER BY points DESC
-                FETCH FIRST 10 ROWS ONLY`,
-                {},
-                { outFormat: oracledb.OUT_FORMAT_OBJECT }
-            );
-
-            const leaderboard = result.rows.map(row => ({
-                name: row.NAME,
-                points: row.POINTS || 0
-            }));
-
-            res.json(leaderboard);
-        } catch (dbError) {
-            res.status(400).json({ error: dbError.message || 'Error fetching leaderboard' });
-        } finally {
-            await connection.close();
-        }
+        res.json(await fetchLeaderboard(30));
     } catch (error) {
-        console.error('Get leaderboard error:', error);
+        console.error('Get month leaderboard error:', error);
         res.status(500).json({ error: 'Internal server error' });
     }
 });
 
-// API: Получение места пользователя в лидерборде
+// =====================================================
+// API: Место пользователя в лидерборде (за месяц)
+// =====================================================
 app.get('/api/leaderboard/user/:user_id', async (req, res) => {
-    if (!oracleInitialized) {
-        return res.status(503).json({
-            error: 'Database unavailable. Install Oracle Instant Client and check connection.'
-        });
-    }
+    if (!dbReady) return dbUnavailable(res);
 
     try {
-        const userId = parseInt(req.params.user_id);
-        if (!userId) {
-            return res.status(400).json({ error: 'Invalid user_id' });
-        }
+        const userId = parseInt(req.params.user_id, 10);
+        if (!userId) return res.status(400).json({ error: 'Invalid user_id' });
 
-        const connection = await oracledb.getConnection(dbConfig);
+        const pointsRes = await pool.query(
+            `SELECT COALESCE(SUM(score), 0)::int AS points
+             FROM test_results
+             WHERE user_id = $1 AND test_date >= NOW() - INTERVAL '30 days'`,
+            [userId]
+        );
+        const userPoints = pointsRes.rows[0].points || 0;
 
-        try {
-            // Получаем очки пользователя за месяц
-            const pointsResult = await connection.execute(
-                `SELECT NVL(SUM(SCORE), 0) as points FROM TEST_RESULTS WHERE USER_ID = :user_id AND TEST_DATE >= SYSDATE - 30`,
-                { user_id: userId }
-            );
+        const placeRes = await pool.query(
+            `SELECT COUNT(*) + 1 AS place FROM (
+                SELECT user_id, SUM(score) AS total_points
+                FROM test_results
+                WHERE test_date >= NOW() - INTERVAL '30 days'
+                GROUP BY user_id
+                HAVING SUM(score) > $1
+             ) sub`,
+            [userPoints]
+        );
 
-            const userPoints = pointsResult.rows[0][0] || 0;
-
-            // Считаем место пользователя
-            const placeResult = await connection.execute(
-                `SELECT COUNT(*) + 1 as place
-                FROM (
-                    SELECT USER_ID, SUM(SCORE) as total_points
-                    FROM TEST_RESULTS
-                    WHERE TEST_DATE >= SYSDATE - 30
-                    GROUP BY USER_ID
-                    HAVING SUM(SCORE) > :user_points
-                )`,
-                { user_points: userPoints }
-            );
-
-            res.json({
-                place: placeResult.rows[0][0] || null,
-                points: userPoints
-            });
-        } catch (dbError) {
-            res.status(400).json({ error: dbError.message || 'Error fetching user leaderboard data' });
-        } finally {
-            await connection.close();
-        }
+        res.json({
+            place: Number(placeRes.rows[0].place) || null,
+            points: userPoints
+        });
     } catch (error) {
         console.error('Get user leaderboard error:', error);
         res.status(500).json({ error: 'Internal server error' });
     }
 });
 
-// API: Проверка здоровья сервера
+// =====================================================
+// API: Health check
+// =====================================================
 app.get('/api/health', async (req, res) => {
-    const dbConnected = await testConnection();
+    const ok = await testConnection();
     res.json({
         status: 'ok',
-        database: dbConnected ? 'connected' : 'disconnected',
-        oracle_initialized: oracleInitialized
+        database: ok ? 'connected' : 'disconnected',
+        provider: 'supabase-postgres'
     });
 });
 
-// Отдача index.html для всех остальных маршрутов (SPA)
-// Должен быть после всех API маршрутов
+// SPA catch-all — должен быть после всех /api/* маршрутов
 app.get('*', (req, res) => {
     res.sendFile(path.join(__dirname, 'index.html'));
 });
 
-// Получение локального IP адреса
 function getLocalIPAddress() {
     const interfaces = os.networkInterfaces();
     for (const name of Object.keys(interfaces)) {
         for (const iface of interfaces[name]) {
-            // Пропускаем внутренние и не-IPv4 адреса
             if (iface.family === 'IPv4' && !iface.internal) {
                 return iface.address;
             }
@@ -540,45 +426,23 @@ function getLocalIPAddress() {
     return 'localhost';
 }
 
-// Запуск сервера
 async function startServer() {
-    await initializeOracle();
-
-    if (oracleInitialized) {
-        await testConnection();
-    }
+    await testConnection();
 
     const localIP = getLocalIPAddress();
-
-    // Listen on all interfaces so LAN clients can reach it
     app.listen(PORT, '0.0.0.0', () => {
         console.log('');
         console.log('═══════════════════════════════════════════════════════');
-        console.log('  EkiTili Server');
+        console.log('  EkiTili Server (Supabase / PostgreSQL)');
         console.log('═══════════════════════════════════════════════════════');
         console.log(`  ✓ Local:    http://localhost:${PORT}`);
         console.log(`  ✓ Network:  http://${localIP}:${PORT}`);
         console.log(`  ✓ API:      http://${localIP}:${PORT}/api`);
         console.log(`  ✓ Health:   http://${localIP}:${PORT}/api/health`);
         console.log('');
-        console.log('  📱 Доступно по локальной сети!');
-        console.log('  ⚠ ВАЖНО: Используйте HTTP (не HTTPS)!');
-        console.log('  Откройте в браузере на других устройствах:');
-        console.log(`  http://${localIP}:${PORT}`);
-        console.log('');
-        console.log('  Если браузер показывает ошибку безопасности:');
-        console.log('  - Убедитесь, что используете http:// (не https://)');
-        console.log('  - Нажмите "Дополнительно" → "Перейти на сайт"');
-        console.log('');
-
-        if (!oracleInitialized) {
-            console.log('  ⚠ Database unavailable');
-            console.log('  Install Oracle Instant Client to work with database');
-            console.log('  Регистрация будет недоступна без базы данных');
-        } else {
-            console.log('  ✓ Database ready - регистрация доступна');
-        }
-
+        console.log(dbReady
+            ? '  ✓ Database ready — регистрация/логин/лидерборд доступны'
+            : '  ⚠ Database unavailable — проверь .env (PGHOST/PGUSER/PGPASSWORD)');
         console.log('');
         console.log('  Press Ctrl+C to stop the server');
         console.log('═══════════════════════════════════════════════════════');
@@ -586,11 +450,8 @@ async function startServer() {
     });
 }
 
-// Обработка ошибок
 process.on('unhandledRejection', (error) => {
     console.error('Unhandled rejection:', error);
 });
 
-// Запуск
 startServer().catch(console.error);
-

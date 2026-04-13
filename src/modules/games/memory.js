@@ -1,5 +1,6 @@
 import { flashcardsData, userFlashcards } from '../../data/flashcards.js';
 import { unlockAchievement } from '../../services/achievements.js';
+import { recordActivity } from '../../services/streak.js';
 
 let gameActive = false;
 let cards = [];
@@ -178,7 +179,9 @@ function handleWin() {
     // Разблокировать достижение "Мастер Памяти"
     unlockAchievement('memory_master');
 
-    // Можно добавить начисление очков здесь
+    // Засчитываем активность в стрик
+    recordActivity();
+
     gameActive = false;
 }
 

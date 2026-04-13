@@ -2,6 +2,7 @@
 import { userFlashcards } from '../../data/flashcards.js';
 import { getDueFlashcards, updateCardSRSOnCorrect, updateCardSRSOnIncorrect } from '../../services/srs.js';
 import { getNewFlashcardsCount, getReviewedTodayCount } from '../../services/stats.js';
+import { recordActivity } from '../../services/streak.js';
 
 let currentMode = 'repeat';
 let currentCardIdx = 0;
@@ -84,6 +85,7 @@ function renderRepeatMode(catContainer) {
         correctBtn.onclick = () => {
             const card = dueCards[currentCardIdx];
             updateCardSRSOnCorrect(card);
+            recordActivity();
             currentCardIdx++;
             if (currentCardIdx < dueCards.length) {
                 showCard(currentCardIdx);
@@ -98,6 +100,7 @@ function renderRepeatMode(catContainer) {
         incorrectBtn.onclick = () => {
             const card = dueCards[currentCardIdx];
             updateCardSRSOnIncorrect(card);
+            recordActivity();
             currentCardIdx++;
             if (currentCardIdx < dueCards.length) {
                 showCard(currentCardIdx);

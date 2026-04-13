@@ -4,6 +4,7 @@ import { userFlashcards } from '../../data/flashcards.js';
 import { renderLessonsPath } from './lessonRenderer.js';
 import { renderStats } from '../profile/profileRenderer.js';
 import { getToday } from '../../utils/date.js';
+import { recordActivity } from '../../services/streak.js';
 
 let currentLessonIdx = 0;
 let currentStep = 0;
@@ -183,7 +184,10 @@ function completeLesson() {
     if (currentLessonIdx + 1 < lessonsProgress.length && lessonsProgress[currentLessonIdx + 1] === false) {
         lessonsProgress[currentLessonIdx + 1] = null;
     }
-    
+
+    // Засчитываем активность в стрик
+    recordActivity();
+
     renderLessonsPath();
     closeLessonPage();
     if (renderStats) renderStats();

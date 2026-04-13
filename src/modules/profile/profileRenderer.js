@@ -1,11 +1,12 @@
 // Рендеринг профиля и статистики
 import { lessonsData, lessonsProgress } from '../../data/lessons.js';
-import { demoStreak, demoActivity, userProfile } from '../../data/user.js';
+import { userProfile } from '../../data/user.js';
 import { leaderboardWeek, leaderboardMonth } from '../../data/leaderboard.js';
 import { getCourseProgressPercent } from '../../services/stats.js';
 import { drawCircleProgress, drawActivityChart } from '../../utils/charts.js';
 import { renderLeaderboard } from '../leaderboard/leaderboardRenderer.js';
 import { REQUIRED_ACHIEVEMENTS } from '../../services/achievements.js';
+import { getStreakData, STREAK_UPDATED_EVENT } from '../../services/streak.js';
 
 export function renderStats() {
     // 1. Кольцевой прогресс-бар (курс)
@@ -62,43 +63,41 @@ export function renderStats() {
         }
     }
 
-    // 2. Стрик
+    // 2. Стрик (реальные данные из localStorage)
+    const streak = getStreakData();
     const streakEl = document.getElementById('streakValue');
-    if (streakEl) streakEl.textContent = demoStreak;
+    if (streakEl) {
+        streakEl.textContent = streak.current;
+        streakEl.classList.toggle('streak-inactive', !streak.completedToday);
+    }
+    const streakDescEl = document.querySelector('.stat-streak .streak-desc');
+    if (streakDescEl) {
+        if (streak.longest > 0) {
+            streakDescEl.textContent = `дней подряд · лучший ${streak.longest}`;
+        } else {
+            streakDescEl.textContent = 'дней подряд';
+        }
+    }
 
-    // 2.1. Визуализация дней недели
+    // 2.1. Визуализация дней недели (последние 7 дней)
     const weekEl = document.getElementById('streakWeek');
     if (weekEl) {
         weekEl.innerHTML = '';
-        const days = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'];
-        const todayIdx = new Date().getDay(); // 0=Вс, 6=Сб
-
-        // Сдвигаем demoActivity и дни недели так, чтобы последний был сегодня
-        let activity7 = [];
-        let days7 = [];
-        for (let i = 6; i >= 0; --i) {
-            const d = (todayIdx - i + 7) % 7;
-            activity7.push(demoActivity[d]);
-            days7.push(days[d]);
-        }
-
-        for (let i = 0; i < 7; ++i) {
+        const shortNames = ['Вс', 'Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб'];
+        streak.last7Days.forEach(entry => {
             const day = document.createElement('div');
             day.className = 'streak-day';
-            if (activity7[i] > 0) day.classList.add('active');
-            if (i === 6) day.classList.add('today');
-            day.textContent = days7[i];
+            if (entry.count > 0) day.classList.add('active');
+            if (entry.isToday) day.classList.add('today');
+            const d = new Date(entry.date + 'T00:00:00');
+            day.textContent = shortNames[d.getDay()];
+            day.title = `${entry.date}: ${entry.count} ${entry.count === 1 ? 'действие' : 'действий'}`;
             weekEl.appendChild(day);
-        }
+        });
     }
 
-    // 3. График активности (7 дней до сегодня)
-    let activity7 = [];
-    const todayIdx = new Date().getDay();
-    for (let i = 6; i >= 0; --i) {
-        const d = (todayIdx - i + 7) % 7;
-        activity7.push(demoActivity[d]);
-    }
+    // 3. График активности (последние 7 дней)
+    const activity7 = streak.last7Days.map(e => e.count);
     drawActivityChart('activityChart', activity7);
 
     // 4. Прогресс по категориям (по урокам)
@@ -196,5 +195,13 @@ document.addEventListener('achievements-updated', () => {
     if (document.getElementById('tab-profile').classList.contains('active')) {
         renderStats();
         updateProfileDisplay(); // Also update profile details if needed
+    }
+});
+
+// Обновление стрика после учебной активности
+document.addEventListener(STREAK_UPDATED_EVENT, () => {
+    const profileTab = document.getElementById('tab-profile');
+    if (profileTab && profileTab.classList.contains('active')) {
+        renderStats();
     }
 });

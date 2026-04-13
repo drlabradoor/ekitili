@@ -17,6 +17,27 @@ export const REQUIRED_ACHIEVEMENTS = {
         description: 'Победить в игре Memory 4x4',
         icon: '🧠',
         target: 1
+    },
+    streak_3: {
+        id: 'streak_3',
+        title: 'В ритме',
+        description: 'Стрик 3 дня подряд',
+        icon: '🔥',
+        target: 3
+    },
+    streak_7: {
+        id: 'streak_7',
+        title: 'Неделя силы',
+        description: 'Стрик 7 дней подряд',
+        icon: '🔥',
+        target: 7
+    },
+    streak_30: {
+        id: 'streak_30',
+        title: 'Месяц силы',
+        description: 'Стрик 30 дней подряд',
+        icon: '🔥',
+        target: 30
     }
 };
 

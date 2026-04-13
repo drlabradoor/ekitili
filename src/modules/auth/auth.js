@@ -5,6 +5,7 @@ import { updateUserProfile } from '../../data/user.js';
 import { updateProfileDisplay, renderStats } from '../profile/profileRenderer.js';
 import { updateAuthButtons } from '../profile/profile.js';
 import { loadUserAchievements } from '../../services/achievements.js';
+import { loadStreakFromServer } from '../../services/streak.js';
 
 /**
  * Инициализация модуля авторизации
@@ -53,12 +54,15 @@ function setupLoginForm() {
             // Обновляем профиль
             updateUserProfile(result.username);
 
-            // Загружаем достижения
-            await loadUserAchievements();
+            // Загружаем достижения и стрик с сервера
+            await Promise.all([
+                loadUserAchievements(),
+                loadStreakFromServer()
+            ]);
 
             // Обновляем UI
             updateProfileDisplay();
-            renderStats(); // Отрисовать достижения
+            renderStats(); // Отрисовать достижения и стрик
 
             // Обновляем кнопки профиля
             updateAuthButtons();
@@ -152,8 +156,11 @@ function setupRegisterForm() {
             // Обновляем профиль
             updateUserProfile(result.username);
 
-            // Загружаем достижения (пустые, но структура должна быть)
-            await loadUserAchievements();
+            // Загружаем достижения и стрик (пустые, но структура должна быть)
+            await Promise.all([
+                loadUserAchievements(),
+                loadStreakFromServer()
+            ]);
 
             // Обновляем UI
             updateProfileDisplay();

@@ -346,6 +346,12 @@ main {
     font-weight: bold;
     color: #ff9800;
     margin: 2px 0 2px 0;
+    transition: color 0.2s, opacity 0.2s;
+}
+
+.streak-value.streak-inactive {
+    color: #bbb;
+    opacity: 0.75;
 }
 
 .streak-desc {

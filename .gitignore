@@ -24,3 +24,7 @@ Thumbs.db
 dist/
 build/
 
+# Tooling / generated output
+.claude/
+graphify-out/
+

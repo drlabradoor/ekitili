@@ -2,6 +2,7 @@
 // Данные пользователя
 import { getCurrentUser } from '../services/auth.js';
 import { loadUserAchievements } from '../services/achievements.js';
+import { loadStreakFromServer } from '../services/streak.js';
 
 // Получаем данные пользователя из localStorage или используем дефолтные
 const currentUser = getCurrentUser();
@@ -90,15 +91,10 @@ export function loadUserProfile() {
         updateUserProfile(currentUser.username);
     }
 
-    // Загружаем достижения с сервера
+    // Загружаем достижения и стрик с сервера
     loadUserAchievements();
+    loadStreakFromServer();
 }
-
-// Стрик: 12 дней подряд
-export let demoStreak = 12;
-
-// Активность по дням (7 дней)
-export let demoActivity = [2, 3, 1, 4, 2, 6, 1];
 
 /**
  * Сбросить данные профиля (при выходе)

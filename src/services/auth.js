@@ -143,6 +143,7 @@ export async function loginUser(username, password) {
 }
 
 import { resetUserProfile } from '../data/user.js';
+import { resetStreakData } from './streak.js';
 
 /**
  * Выход пользователя
@@ -152,8 +153,9 @@ export function logoutUser() {
     localStorage.removeItem('userId');
     localStorage.removeItem('username');
 
-    // Сбрасываем профиль в памяти
+    // Сбрасываем профиль и стрик в памяти
     resetUserProfile();
+    resetStreakData();
 }
 
 /**
