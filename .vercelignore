@@ -1,0 +1,26 @@
+# Исключения для Vercel-деплоя.
+# Всё, что не нужно в проде.
+
+node_modules
+.env
+.env.local
+.env.*.local
+
+# dev-артефакты
+graphify-out
+scripts
+database
+start-server.sh
+start-server.bat
+main.js.old
+
+# документация и конфиги редактора
+CLAUDE.md
+.cursor
+.claude
+.github
+memory
+
+# git
+.git
+.gitignore
