@@ -24,21 +24,21 @@ export let srsQueue = [];
 
 // База карточек пользователя
 export let userFlashcards = [
-    { front: 'Сәлем', back: 'Привет', phonetic: '[sælem]', srsLevel: 1, status: 'new', stats: { correct: 0, incorrect: 0 } },
-    { front: 'Кітап', back: 'Книга', phonetic: '[kitap]', srsLevel: 1, status: 'new', stats: { correct: 0, incorrect: 0 } },
-    { front: 'Су', back: 'Вода', phonetic: '[su]', srsLevel: 1, status: 'new', stats: { correct: 0, incorrect: 0 } },
-    { front: 'Ана', back: 'Мама', phonetic: '[ana]', srsLevel: 2, status: 'learning', stats: { correct: 1, incorrect: 0 } },
-    { front: 'Әке', back: 'Папа', phonetic: '[äke]', srsLevel: 2, status: 'learning', stats: { correct: 1, incorrect: 0 } },
-    { front: 'Үй', back: 'Дом', phonetic: '[üi]', srsLevel: 2, status: 'learning', stats: { correct: 1, incorrect: 0 } },
-    { front: 'Дос', back: 'Друг', phonetic: '[dos]', srsLevel: 3, status: 'learning', stats: { correct: 2, incorrect: 0 } },
-    { front: 'Жол', back: 'Дорога', phonetic: '[jol]', srsLevel: 3, status: 'learning', stats: { correct: 2, incorrect: 0 } },
-    { front: 'Күн', back: 'День', phonetic: '[kün]', srsLevel: 3, status: 'learning', stats: { correct: 2, incorrect: 0 } },
-    { front: 'Тіл', back: 'Язык', phonetic: '[til]', srsLevel: 4, status: 'learning', stats: { correct: 3, incorrect: 0 } },
-    { front: 'Мектеп', back: 'Школа', phonetic: '[mektep]', srsLevel: 4, status: 'learning', stats: { correct: 3, incorrect: 0 } },
-    { front: 'Оқушы', back: 'Ученик', phonetic: '[oqūshy]', srsLevel: 4, status: 'learning', stats: { correct: 3, incorrect: 0 } },
-    { front: 'Қала', back: 'Город', phonetic: '[qala]', srsLevel: 5, status: 'reviewed', stats: { correct: 4, incorrect: 0 } },
-    { front: 'Адам', back: 'Человек', phonetic: '[adam]', srsLevel: 5, status: 'reviewed', stats: { correct: 4, incorrect: 0 } },
-    { front: 'Бала', back: 'Ребёнок', phonetic: '[bala]', srsLevel: 5, status: 'reviewed', stats: { correct: 4, incorrect: 0 } },
+    { front: 'Сәлем', back: 'Привет', phonetic: '[sælem]', svgShape: 'wave', srsLevel: 1, status: 'new', stats: { correct: 0, incorrect: 0 } },
+    { front: 'Кітап', back: 'Книга', phonetic: '[kitap]', svgShape: 'book', srsLevel: 1, status: 'new', stats: { correct: 0, incorrect: 0 } },
+    { front: 'Су', back: 'Вода', phonetic: '[su]', svgShape: 'water', srsLevel: 1, status: 'new', stats: { correct: 0, incorrect: 0 } },
+    { front: 'Ана', back: 'Мама', phonetic: '[ana]', svgShape: 'heart', srsLevel: 2, status: 'learning', stats: { correct: 1, incorrect: 0 } },
+    { front: 'Әке', back: 'Папа', phonetic: '[äke]', svgShape: 'shield', srsLevel: 2, status: 'learning', stats: { correct: 1, incorrect: 0 } },
+    { front: 'Үй', back: 'Дом', phonetic: '[üi]', svgShape: 'house', srsLevel: 2, status: 'learning', stats: { correct: 1, incorrect: 0 } },
+    { front: 'Дос', back: 'Друг', phonetic: '[dos]', svgShape: 'people', srsLevel: 3, status: 'learning', stats: { correct: 2, incorrect: 0 } },
+    { front: 'Жол', back: 'Дорога', phonetic: '[jol]', svgShape: 'road', srsLevel: 3, status: 'learning', stats: { correct: 2, incorrect: 0 } },
+    { front: 'Күн', back: 'День', phonetic: '[kün]', svgShape: 'sun', srsLevel: 3, status: 'learning', stats: { correct: 2, incorrect: 0 } },
+    { front: 'Тіл', back: 'Язык', phonetic: '[til]', svgShape: 'speech', srsLevel: 4, status: 'learning', stats: { correct: 3, incorrect: 0 } },
+    { front: 'Мектеп', back: 'Школа', phonetic: '[mektep]', svgShape: 'school', srsLevel: 4, status: 'learning', stats: { correct: 3, incorrect: 0 } },
+    { front: 'Оқушы', back: 'Ученик', phonetic: '[oqūshy]', svgShape: 'person', srsLevel: 4, status: 'learning', stats: { correct: 3, incorrect: 0 } },
+    { front: 'Қала', back: 'Город', phonetic: '[qala]', svgShape: 'city', srsLevel: 5, status: 'reviewed', stats: { correct: 4, incorrect: 0 } },
+    { front: 'Адам', back: 'Человек', phonetic: '[adam]', svgShape: 'person', srsLevel: 5, status: 'reviewed', stats: { correct: 4, incorrect: 0 } },
+    { front: 'Бала', back: 'Ребёнок', phonetic: '[bala]', svgShape: 'child', srsLevel: 5, status: 'reviewed', stats: { correct: 4, incorrect: 0 } },
 ];
 
 // Инициализация nextReview для новых карточек (вызывается из main.js)

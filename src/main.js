@@ -9,7 +9,7 @@ import { initRouter } from './navigation/router.js';
 import { initAuth, showLogin } from './modules/auth/auth.js';
 import { isAuthenticated, checkApiConnection } from './services/auth.js';
 import { loadUserProfile } from './data/user.js';
-import { initMemoryGame } from './modules/games/memory.js';
+import { initBattle } from './modules/games/battle.js';
 
 // Функция инициализации
 async function initializeApp() {
@@ -50,7 +50,7 @@ async function initializeApp() {
         renderStats();
         updateProfileDisplay(); // Обновляем отображение профиля
         initProfile();
-        initMemoryGame();
+        initBattle();
         updateAuthButtons(); // Обновляем кнопки входа/выхода в профиле
         initRouter();
     } catch (error) {

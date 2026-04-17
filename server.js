@@ -3,8 +3,10 @@
 
 require('dotenv').config();
 
+const http = require('http');
 const os = require('os');
 const app = require('./app');
+const { initBattleSocket } = require('./battle-server');
 
 const PORT = parseInt(process.env.PORT, 10) || 3000;
 
@@ -20,7 +22,10 @@ function getLocalIPAddress() {
     return 'localhost';
 }
 
-app.listen(PORT, '0.0.0.0', () => {
+const server = http.createServer(app);
+initBattleSocket(server);
+
+server.listen(PORT, '0.0.0.0', () => {
     const localIP = getLocalIPAddress();
     console.log('');
     console.log('═══════════════════════════════════════════════════════');
@@ -29,6 +34,7 @@ app.listen(PORT, '0.0.0.0', () => {
     console.log(`  ✓ Local:    http://localhost:${PORT}`);
     console.log(`  ✓ Network:  http://${localIP}:${PORT}`);
     console.log(`  ✓ Health:   http://localhost:${PORT}/api/health`);
+    console.log(`  ✓ Battle:   socket.io ready`);
     console.log('');
     console.log('  Press Ctrl+C to stop the server');
     console.log('═══════════════════════════════════════════════════════');

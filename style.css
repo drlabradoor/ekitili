@@ -2015,134 +2015,472 @@ body.lesson-open .app-header { display: none !important; }
     right: 16px;
     z-index: 10;
 }
-/* Memory Game Styles */
-.games-container {
-    padding: 10px;
+/* =====================================================
+   Battle Styles
+   ===================================================== */
+.battle-container {
+    padding: 8px;
     width: 100%;
-    /* Occupy remaining height: 100dvh minus header (~60px) and bottom nav (~70px) and padding */
-    height: calc(100dvh - 130px); 
+    height: calc(100dvh - 130px);
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+}
+
+/* --- Лобби --- */
+.battle-lobby {
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: flex-start; 
+    gap: 16px;
+    padding: 16px 8px;
 }
-
-.section-header {
-    width: 100%;
-    max-width: 500px; /* Limit width of controls */
-    margin-bottom: 10px;
-    flex-shrink: 0;
+.battle-title {
+    font-size: 1.6rem;
+    font-weight: 800;
+    background: linear-gradient(135deg, #2563eb, #7c3aed);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
 }
-
-.game-controls {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    background: white;
-    padding: 10px 15px;
-    border-radius: 12px;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.05);
-}
-
-#memory-game-status {
-    font-weight: 600;
+.battle-subtitle {
     font-size: 0.9rem;
-    color: var(--text-color, #333);
+    color: #64748b;
+    text-align: center;
 }
-
-.action-btn {
-    background: var(--primary-color, #4CAF50);
+.lobby-avatar-preview {
+    width: 120px;
+}
+.battle-find-btn {
+    background: linear-gradient(135deg, #2563eb, #7c3aed);
     color: white;
     border: none;
-    padding: 8px 16px;
-    border-radius: 8px;
+    padding: 14px 32px;
+    border-radius: 14px;
+    font-size: 1.05rem;
+    font-weight: 700;
     cursor: pointer;
-    font-weight: 500;
-    transition: transform 0.2s;
-    font-size: 0.9rem;
+    transition: transform 0.15s, box-shadow 0.15s;
+    box-shadow: 0 4px 20px rgba(37,99,235,0.3);
 }
-
-.action-btn:active {
-    transform: scale(0.95);
-}
-
-.memory-game-board {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 8px;
-    /* Logic: Square board. Size = min(90% width, available height) */
-    width: min(92vw, calc(100dvh - 220px));
-    height: min(92vw, calc(100dvh - 220px));
-    aspect-ratio: 1;
-    margin: auto 0; /* Center vertically if space exists */
-}
-
-.memory-card {
-    background-color: transparent;
-    perspective: 1000px;
-    cursor: pointer;
+.battle-find-btn:active { transform: scale(0.96); }
+.battle-rules {
+    background: white;
+    border-radius: 12px;
+    padding: 14px 16px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+    font-size: 0.82rem;
+    line-height: 1.5;
     width: 100%;
+    max-width: 380px;
+}
+.rules-title { font-weight: 700; margin-bottom: 6px; }
+.battle-rules ul { padding-left: 18px; margin: 0; }
+.battle-rules li { margin-bottom: 4px; }
+
+/* --- Поиск соперника --- */
+.battle-searching {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 24px;
     height: 100%;
 }
+.searching-spinner {
+    width: 56px; height: 56px;
+    border: 4px solid #e2e8f0;
+    border-top-color: #2563eb;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+.battle-cancel-btn {
+    background: #f1f5f9;
+    color: #64748b;
+    border: none;
+    padding: 10px 24px;
+    border-radius: 10px;
+    font-weight: 600;
+    cursor: pointer;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
 
-.memory-card-inner {
+/* --- Арена --- */
+.battle-arena {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    gap: 6px;
+}
+.arena-top {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 4px;
+    flex-shrink: 0;
+}
+.arena-batyr { flex: 1; max-width: 110px; }
+.arena-vs {
+    font-size: 1rem;
+    font-weight: 900;
+    color: #94a3b8;
+    align-self: center;
+    padding: 0 2px;
+}
+
+/* --- Батыр --- */
+.batyr-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
     position: relative;
+}
+.batyr-name {
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: #334155;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 100%;
+}
+.batyr-svg { width: 64px; height: auto; }
+.batyr-hp-bar {
     width: 100%;
+    height: 7px;
+    background: #e2e8f0;
+    border-radius: 4px;
+    overflow: hidden;
+}
+.batyr-hp-fill {
     height: 100%;
-    text-align: center;
-    transition: transform 0.4s;
-    transform-style: preserve-3d;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-    border-radius: 8px;
+    border-radius: 4px;
+    transition: width 0.4s ease, background 0.4s ease;
+}
+.batyr-hp-text {
+    font-size: 0.6rem;
+    color: #64748b;
+    font-weight: 600;
 }
 
-.memory-card.flipped .memory-card-inner {
-    transform: rotateY(180deg);
+/* --- Панель спецприёмов (нижняя зона арены) --- */
+.arena-specials {
+    flex-shrink: 0;
+    padding: 4px 0;
 }
-
-.memory-card.matched .memory-card-inner {
-    transform: rotateY(180deg);
+.specials-panel {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
 }
-
-.memory-card.matched .memory-card-back {
-    background: #e6fffa;
-    border: 2px solid #38b2ac;
+.special-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+    min-width: 64px;
+    padding: 10px 12px;
+    border: 2px solid #cbd5e1;
+    border-radius: 12px;
+    background: white;
+    cursor: pointer;
+    transition: transform 0.15s, border-color 0.15s, box-shadow 0.15s;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
 }
-
-.memory-card-front, .memory-card-back {
-    position: absolute;
-    width: 100%;
-    height: 100%;
-    -webkit-backface-visibility: hidden;
-    backface-visibility: hidden;
+.special-btn:active:not(:disabled) {
+    transform: scale(0.93);
+    border-color: #2563eb;
+    box-shadow: 0 0 0 3px rgba(37,99,235,0.15);
+}
+.special-btn--used {
+    opacity: 0.3;
+    cursor: default;
+    border-color: #e2e8f0;
+}
+.special-btn-icon {
     display: flex;
     align-items: center;
     justify-content: center;
-    border-radius: 8px;
-    font-weight: bold;
-    padding: 4px;
-    box-sizing: border-box;
-    /* Prevent text selection */
+}
+.special-btn-icon svg { width: 24px; height: 24px; }
+.special-btn-label {
+    font-size: 0.65rem;
+    font-weight: 600;
+    color: #64748b;
+    white-space: nowrap;
+}
+
+/* Анимации батыра */
+.batyr--hit {
+    animation: batyrHit 0.4s ease;
+}
+.batyr--attack {
+    animation: batyrAttack 0.5s ease;
+}
+.batyr--defeated {
+    opacity: 0.4;
+    filter: grayscale(1);
+    transition: opacity 0.8s, filter 0.8s;
+}
+@keyframes batyrHit {
+    0%, 100% { transform: translateX(0); }
+    20% { transform: translateX(-8px); }
+    40% { transform: translateX(8px); }
+    60% { transform: translateX(-4px); }
+    80% { transform: translateX(4px); }
+}
+@keyframes batyrAttack {
+    0% { transform: translateX(0); }
+    40% { transform: translateX(20px) scale(1.05); }
+    100% { transform: translateX(0) scale(1); }
+}
+.batyr--right .batyr--attack,
+.batyr--right.batyr--attack {
+    animation-name: batyrAttackRight;
+}
+@keyframes batyrAttackRight {
+    0% { transform: translateX(0); }
+    40% { transform: translateX(-20px) scale(1.05); }
+    100% { transform: translateX(0) scale(1); }
+}
+
+/* Урон float */
+.damage-float {
+    position: absolute;
+    top: 20%;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 1.4rem;
+    font-weight: 900;
+    color: #ef4444;
+    animation: floatUp 1s ease forwards;
+    pointer-events: none;
+    z-index: 10;
+}
+.damage-float--crit {
+    font-size: 1.8rem;
+    color: #f59e0b;
+    text-shadow: 0 0 8px rgba(245,158,11,0.5);
+}
+@keyframes floatUp {
+    0% { opacity: 1; transform: translateX(-50%) translateY(0); }
+    100% { opacity: 0; transform: translateX(-50%) translateY(-40px); }
+}
+
+/* --- Центральная зона --- */
+.arena-center {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    min-height: 0;
+}
+#arena-turn-info {
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: #334155;
+    text-align: center;
+    padding: 6px 12px;
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    width: 100%;
+    max-width: 340px;
+}
+.turn-info--correct { color: #16a34a !important; }
+.turn-info--wrong { color: #ef4444 !important; }
+
+/* --- Карты атаки --- */
+.attack-cards {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+.attack-card {
+    width: 95px;
+    background: white;
+    border: 3px solid #e2e8f0;
+    border-radius: 14px;
+    padding: 10px 8px;
+    text-align: center;
+    cursor: pointer;
+    transition: transform 0.15s, border-color 0.15s, box-shadow 0.15s;
     user-select: none;
-    -webkit-user-select: none;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+}
+.attack-card:hover, .attack-card:active {
+    border-color: #2563eb;
+    transform: translateY(-4px);
+    box-shadow: 0 6px 20px rgba(37,99,235,0.2);
+}
+.attack-card-svg {
+    width: 54px; height: 54px;
+    margin: 0 auto 6px;
+}
+.attack-card-svg svg { width: 100%; height: 100%; }
+.attack-card-word {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: #334155;
 }
 
-.memory-card-front {
-    background: linear-gradient(135deg, var(--primary-color, #4CAF50), var(--secondary-color, #2196F3));
-    color: white;
-    font-size: clamp(1.2rem, 5vmin, 2.5rem); /* Responsive icon size */
+/* --- Фаза защиты --- */
+.defend-phase {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    max-width: 340px;
+}
+.defend-incoming-card {
+    background: linear-gradient(135deg, #fef3c7, #fde68a);
+    border: 3px solid #f59e0b;
+    border-radius: 14px;
+    padding: 12px;
+    text-align: center;
+    animation: cardFlyIn 0.4s ease;
+}
+.defend-card-svg {
+    width: 60px; height: 60px;
+    margin: 0 auto 6px;
+}
+.defend-card-svg svg { width: 100%; height: 100%; }
+.defend-hint {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: #b45309;
+    margin-top: 8px;
+    padding-top: 6px;
+    border-top: 1px solid #fbbf24;
+}
+.defend-card-word {
+    font-size: 1.1rem;
+    font-weight: 800;
+    color: #92400e;
+}
+@keyframes cardFlyIn {
+    0% { opacity: 0; transform: translateY(-30px) scale(0.8); }
+    100% { opacity: 1; transform: translateY(0) scale(1); }
 }
 
-.memory-card-back {
-    background-color: white;
-    color: var(--text-color, #333);
-    transform: rotateY(180deg);
-    border: 2px solid #eee;
-    word-break: break-word;
-    line-height: 1.2;
-    /* Responsive text size: minimum 10px, preferred based on viewport, max 18px */
-    font-size: clamp(0.6rem, 2.5vmin, 1.1rem); 
+/* Таймер */
+.defend-timer {
+    width: 100%;
+    height: 8px;
+    background: #e2e8f0;
+    border-radius: 4px;
+    overflow: hidden;
 }
+.defend-timer-bar {
+    height: 100%;
+    background: linear-gradient(90deg, #ef4444, #f59e0b, #22c55e);
+    border-radius: 4px;
+    width: 100%;
+}
+
+/* Варианты ответа */
+.defend-options {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    width: 100%;
+}
+.defend-option-btn {
+    background: white;
+    border: 2px solid #cbd5e1;
+    border-radius: 12px;
+    padding: 14px 10px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: #334155;
+    cursor: pointer;
+    min-height: 48px;
+    transition: border-color 0.15s, background 0.15s, transform 0.1s;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+}
+.defend-option-btn:active { transform: scale(0.96); }
+.defend-option-btn:hover { border-color: #2563eb; background: #eff6ff; }
+.defend-option--selected { border-color: #2563eb; background: #dbeafe; }
+.defend-option-btn:disabled { opacity: 0.6; cursor: default; }
+
+/* Ожидание */
+.waiting-phase {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 30px;
+}
+.waiting-spinner {
+    width: 36px; height: 36px;
+    border: 3px solid #e2e8f0;
+    border-top-color: #2563eb;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+
+/* --- Комбо-бар --- */
+.arena-combo-bar {
+    text-align: center;
+    min-height: 24px;
+    flex-shrink: 0;
+}
+.combo-active {
+    font-size: 0.9rem;
+    font-weight: 800;
+    color: #f59e0b;
+    animation: comboPulse 0.6s ease infinite alternate;
+}
+.combo-building {
+    font-size: 0.8rem;
+    color: #94a3b8;
+}
+@keyframes comboPulse {
+    0% { transform: scale(1); }
+    100% { transform: scale(1.05); }
+}
+
+/* --- Результат --- */
+.battle-result {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    height: 100%;
+    padding: 20px;
+}
+.result-title {
+    font-size: 2rem;
+    font-weight: 900;
+}
+.battle-result--win .result-title { color: #16a34a; }
+.battle-result--lose .result-title { color: #ef4444; }
+.result-icon { font-size: 3rem; }
+.result-stats {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    background: white;
+    border-radius: 12px;
+    padding: 16px 20px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+    width: 100%;
+    max-width: 280px;
+}
+.result-stat {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.9rem;
+}
+.result-stat-label { color: #64748b; }
+.result-stat-value { font-weight: 700; color: #334155; }
 
 
 /* Achievement Styles */

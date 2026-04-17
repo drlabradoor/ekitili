@@ -4,7 +4,7 @@ import { renderFlashcardsTab } from '../modules/flashcards/flashcards.js';
 import { renderLeaderboardTab } from '../modules/leaderboard/leaderboard.js';
 import { renderStats } from '../modules/profile/profileRenderer.js';
 import { updateAuthButtons } from '../modules/profile/profile.js';
-import { renderGameTab } from '../modules/games/memory.js';
+import { renderBattleTab } from '../modules/games/battle.js';
 
 export function initRouter() {
     const navItems = document.querySelectorAll('.bottom-nav .nav-item');
@@ -35,7 +35,7 @@ function renderTab(tabId) {
     } else if (tabId === 'tab-cards') {
         renderFlashcardsTab();
     } else if (tabId === 'tab-games') {
-        renderGameTab();
+        renderBattleTab();
     } else if (tabId === 'tab-leaderboard') {
         renderLeaderboardTab();
     } else if (tabId === 'tab-profile') {

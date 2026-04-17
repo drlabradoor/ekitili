@@ -49,18 +49,9 @@
                     <span class="leaderboard-user-points" id="leaderboardUserPoints">0★</span>
                 </div>
             </section>
-            <!-- Игры -->
+            <!-- Батл -->
             <section id="tab-games" class="tab-section">
-                <div class="games-container">
-                    <div class="section-header">
-                        <h2 class="section-title">Memory 4x4</h2>
-                        <div class="game-controls">
-                            <span id="memory-game-status">Найдите все пары!</span>
-                            <button id="restart-memory-game" class="action-btn">Заново</button>
-                        </div>
-                    </div>
-                    <div id="memory-game-board" class="memory-game-board"></div>
-                </div>
+                <div id="battle-container" class="battle-container"></div>
             </section>
             <!-- Профиль + Статистика -->
             <section id="tab-profile" class="tab-section">
@@ -117,8 +108,8 @@
                 <span class="nav-label">Лидерборд</span>
             </div>
             <div class="nav-item" data-tab="tab-games">
-                <span class="nav-icon"><i class="fas fa-puzzle-piece"></i></span>
-                <span class="nav-label">Игры</span>
+                <span class="nav-icon"><i class="fas fa-khanda"></i></span>
+                <span class="nav-label">Батл</span>
             </div>
             <div class="nav-item" data-tab="tab-profile">
                 <span class="nav-icon"><i class="fas fa-user"></i></span>
@@ -218,6 +209,7 @@
         </div>
     </div>
     
+    <script src="/socket.io/socket.io.js"></script>
     <script type="module" src="src/main.js"></script>
 </body>
 </html>

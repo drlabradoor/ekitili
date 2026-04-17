@@ -73,8 +73,6 @@ py -m graphify path "initializeApp" "user_accounts table"
 py -m graphify explain "renderStats"
 ```
 
-⚠ The graph was built against the Oracle version of the codebase. Node/edge names like `USER_ACCOUNTS table`, `REGISTER_USER procedure`, `initializeOracle` still appear there. After the Supabase migration, rebuild with `/graphify . --update` before relying on the graph for navigation.
-
 ## Gotchas
 
 - `main.js.old` exists alongside `src/main.js` — ignore it, it's a pre-modularization snapshot.
