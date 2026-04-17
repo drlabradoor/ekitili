@@ -56,25 +56,6 @@ async function initializeApp() {
     } catch (error) {
         console.error('Initialization error:', error);
     }
-
-    // Анимация прогресс-бара
-    const progressFill = document.querySelector('.progress-fill');
-    if (progressFill) {
-        let percent = 65; // Можно динамически менять
-        progressFill.style.transition = 'width 1s';
-        progressFill.style.width = percent + '%';
-    }
-
-    // Скрываем preloader сразу
-    const preloader = document.getElementById('preloader');
-    if (preloader) {
-        preloader.style.display = 'none';
-        preloader.style.visibility = 'hidden';
-        preloader.style.opacity = '0';
-        preloader.style.pointerEvents = 'none';
-        preloader.style.zIndex = '-1';
-        document.body.style.overflow = '';
-    }
 }
 
 // Проверяем готовность DOM

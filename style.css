@@ -96,13 +96,6 @@ main {
     position: relative;
 }
 
-.progress-fill {
-    height: 100%;
-    width: 65%;
-    background-color: var(--accent-color);
-    border-radius: 4px;
-}
-
 .greeting {
     font-size: 1.2rem;
     margin-bottom: 10px;
@@ -1595,34 +1588,6 @@ body.lesson-open .app-header { display: none !important; }
   object-fit: contain;
   margin: 0 auto;
   max-width: 90vw;
-}
-
-#preloader {
-  position: fixed;
-  top: 0; left: 0; right: 0; bottom: 0;
-  width: 100vw;
-  height: 100vh;
-  background: #fff;
-  z-index: 3000;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: opacity 0.7s;
-  opacity: 1;
-  pointer-events: all;
-}
-#preloader.fade-out {
-  opacity: 0;
-  pointer-events: none;
-}
-.preloader-mascot {
-  max-width: 220px;
-  max-height: 220px;
-  width: 38vw;
-  height: auto;
-  display: block;
-  margin: 0 auto;
-  filter: drop-shadow(0 4px 32px rgba(30,124,124,0.13));
 }
 
 .profile-section {
