@@ -2,18 +2,19 @@
 // Сессия хранится в httpOnly-cookie на сервере (см. server.js),
 // клиент лишь помнит user_id/username для отрисовки UI.
 
-// URL бэкенд API. Берём hostname из открытой страницы, чтобы работало по LAN.
+// URL бэкенд API. На Vercel используется относительный путь, локально :3000
 export function getApiBaseUrl() {
     if (typeof window === 'undefined') {
         return 'http://localhost:3000/api';
     }
 
-    if (window.location.protocol === 'file:' || !window.location.hostname || window.location.hostname === '') {
+    if (window.location.protocol === 'file:' || !window.location.hostname || !window.location.hostname.trim()) {
         return 'http://localhost:3000/api';
     }
 
-    const proto = window.location.protocol === 'https:' ? 'https' : 'http';
-    return `${proto}://${window.location.hostname}:3000/api`;
+    // На Vercel и в продакшене: относительный путь /api (API на том же домене)
+    // Локально на localhost:3000 тоже работает
+    return '/api';
 }
 
 const API_BASE_URL = getApiBaseUrl();
