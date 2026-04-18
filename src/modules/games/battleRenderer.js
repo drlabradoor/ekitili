@@ -45,11 +45,11 @@ export function renderLobby(container, username) {
             <div class="battle-rules">
                 <div class="rules-title">Правила:</div>
                 <ul>
-                    <li>Атакующий выбирает карту и бросает в соперника</li>
-                    <li>Защищающийся выбирает слово на казахском</li>
-                    <li>0-2 сек = парирование (0 урона) | 2-3 сек = 10 урона | 3-4 сек = 15 урона | 4+ сек = 25 урона</li>
-                    <li>Ошибка или таймаут = максимум 25 урона. 3 подряд = +50% комбо</li>
-                    <li>Спецприёмы: Щит, Мороз, Двойной удар (по 3 каждому)</li>
+                    <li>Атакующий выбирает казахское слово (карта), защитник должен выбрать его снова</li>
+                    <li>На защите видно русское слово — выбери казахское слово</li>
+                    <li>На максимальном времени (6 сек): до 2 сек = парирование (0 урона)</li>
+                    <li>На минимальном времени (3 сек): до 1 сек = парирование (0 урона)</li>
+                    <li>Ошибка или таймаут = 25 урона. 3 подряд верных = +50% комбо</li>
                 </ul>
             </div>
         </div>`;
@@ -131,12 +131,13 @@ export function renderAttackPhase(actionArea, hand, turnInfo) {
 // =====================================================
 export function renderDefendPhase(actionArea, turnInfo, card, options, timerSeconds) {
     turnInfo.textContent = 'Что это? Выбери казахское слово:';
-    const hint = card.back ? `<div class="defend-hint" id="defend-hint" style="opacity: 0; transition: opacity 0.3s ease;">${escapeHtml(card.back)}</div>` : '';
+    // Показываем русское слово (back) сразу с карточкой
+    const cardLabel = card.back ? `<div class="defend-card-label">${escapeHtml(card.back)}</div>` : '';
     actionArea.innerHTML = `
         <div class="defend-phase">
             <div class="defend-incoming-card">
                 <div class="defend-card-svg">${getCardSVG(card.svgShape)}</div>
-                ${hint}
+                ${cardLabel}
             </div>
             <div class="defend-timer">
                 <div class="defend-timer-bar" id="defend-timer-bar"></div>
@@ -147,14 +148,6 @@ export function renderDefendPhase(actionArea, turnInfo, card, options, timerSeco
                 `).join('')}
             </div>
         </div>`;
-
-    // Показать подсказку после 2 сек парирования
-    if (card.back) {
-        setTimeout(() => {
-            const hintEl = document.getElementById('defend-hint');
-            if (hintEl) hintEl.style.opacity = '1';
-        }, 2000);
-    }
 }
 
 // =====================================================
@@ -222,6 +215,81 @@ export function showDamageFloat(side, damage, isCrit) {
     floater.textContent = `-${damage}`;
     batyrEl.appendChild(floater);
     setTimeout(() => floater.remove(), 1000);
+}
+
+// =====================================================
+// Экран: Меню игр
+// =====================================================
+export function renderGamesMenu(container) {
+    container.innerHTML = `
+        <div class="games-menu">
+            <div class="battle-title">Батл</div>
+            <div class="games-menu-rows">
+                <div class="games-menu-row">
+                    <div class="games-menu-icon-btn">
+                        <i class="fas fa-khanda"></i>
+                    </div>
+                    <button class="games-menu-main-btn" id="menu-duel-btn">ДУЭЛЬ</button>
+                    <button class="games-menu-rules-btn" id="menu-duel-rules-btn" title="Правила">
+                        <i class="fas fa-book"></i>
+                    </button>
+                </div>
+                <div class="games-menu-row">
+                    <div class="games-menu-icon-btn">
+                        <i class="fas fa-crosshairs"></i>
+                    </div>
+                    <button class="games-menu-main-btn games-menu-main-btn--training" id="menu-training-btn">ТРЕНИРОВКА</button>
+                    <button class="games-menu-rules-btn" id="menu-training-rules-btn" title="Правила">
+                        <i class="fas fa-book"></i>
+                    </button>
+                </div>
+            </div>
+        </div>`;
+}
+
+// =====================================================
+// Модалка правил
+// =====================================================
+export function renderRulesModal(mode) {
+    const existing = document.getElementById('games-rules-modal');
+    if (existing) existing.remove();
+
+    const rules = mode === 'duel' ? `
+        <h3>Дуэль</h3>
+        <ul>
+            <li>2 игрока, каждый начинает со 100 HP</li>
+            <li>Атакующий выбирает карту с казахским словом</li>
+            <li>Защитник видит картинку и русский перевод — нужно выбрать казахское слово</li>
+            <li>Ответ в начале таймера (6 сек) — парирование, 0 урона</li>
+            <li>Медленный ответ — частичный урон. Ошибка или таймаут — 25 урона</li>
+            <li>3 правильных подряд = комбо +50% урон</li>
+        </ul>
+    ` : `
+        <h3>Тренировка</h3>
+        <ul>
+            <li>Соло-режим, 100 HP</li>
+            <li>Карточки идут от самых запомненных к самым трудным (по уровню SRS)</li>
+            <li>Видишь картинку и перевод — выбери казахское слово</li>
+            <li>Таймер начинается с 10 секунд и уменьшается до 2 секунд по ходу игры</li>
+            <li>Ответ в начале таймера = парирование (0 урона)</li>
+            <li>Ошибка или таймаут — 25 урона</li>
+            <li>Игра заканчивается когда HP = 0. Результат — в лидерборд!</li>
+        </ul>
+    `;
+
+    const modal = document.createElement('div');
+    modal.id = 'games-rules-modal';
+    modal.className = 'games-rules-modal';
+    modal.innerHTML = `
+        <div class="games-rules-modal-inner">
+            <button class="games-rules-modal-close" id="rules-modal-close">&times;</button>
+            ${rules}
+        </div>`;
+
+    document.body.appendChild(modal);
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal || e.target.id === 'rules-modal-close') modal.remove();
+    });
 }
 
 function escapeHtml(str) {

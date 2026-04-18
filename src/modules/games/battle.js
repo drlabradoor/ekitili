@@ -12,7 +12,9 @@ import {
     renderWaiting,
     renderResult,
     updateComboBar,
-    showDamageFloat
+    showDamageFloat,
+    renderGamesMenu,
+    renderRulesModal
 } from './battleRenderer.js';
 import { updateBatyrHP, animateBatyrHit, animateBatyrAttack, animateBatyrDefeat } from './batyrAvatar.js';
 
@@ -40,6 +42,20 @@ export function renderBattleTab() {
         return;
     }
 
+    renderGamesMenu(container);
+    bindGamesMenuEvents(container);
+}
+
+function bindGamesMenuEvents(container) {
+    container.querySelector('#menu-duel-btn')?.addEventListener('click', () => startDuel(container));
+    container.querySelector('#menu-duel-rules-btn')?.addEventListener('click', () => renderRulesModal('duel'));
+    container.querySelector('#menu-training-btn')?.addEventListener('click', () => {
+        import('./trainingGame.js').then(m => m.initTraining(container));
+    });
+    container.querySelector('#menu-training-rules-btn')?.addEventListener('click', () => renderRulesModal('training'));
+}
+
+function startDuel(container) {
     const username = localStorage.getItem('username') || 'Батыр';
     renderLobby(container, username);
     bindLobbyEvents(container);
@@ -316,7 +332,10 @@ function handleGameOver(data) {
             // Кнопка «Ещё раз»
             const againBtn = container.querySelector('#battle-again-btn');
             if (againBtn) {
-                againBtn.addEventListener('click', () => renderBattleTab());
+                againBtn.addEventListener('click', () => {
+                    renderGamesMenu(container);
+                    bindGamesMenuEvents(container);
+                });
             }
 
             // Достижение
@@ -355,7 +374,10 @@ function handleOpponentLeft() {
         if (turnInfo) turnInfo.textContent = 'Соперник покинул игру!';
         const againBtn = container.querySelector('#battle-again-btn');
         if (againBtn) {
-            againBtn.addEventListener('click', () => renderBattleTab());
+            againBtn.addEventListener('click', () => {
+                renderGamesMenu(container);
+                bindGamesMenuEvents(container);
+            });
         }
     }
 }

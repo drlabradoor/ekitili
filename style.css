@@ -2324,6 +2324,15 @@ body.lesson-open .app-header { display: none !important; }
     padding-top: 6px;
     border-top: 1px solid #fbbf24;
 }
+.defend-card-label {
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: #92400e;
+    margin-top: 8px;
+    padding: 8px 12px;
+    background-color: rgba(255, 255, 255, 0.5);
+    border-radius: 6px;
+}
 .defend-card-word {
     font-size: 1.1rem;
     font-weight: 800;
@@ -2521,5 +2530,215 @@ body.lesson-open .app-header { display: none !important; }
     font-size: 1.1rem;
     font-weight: bold;
     color: var(--primary-color, #4CAF50);
+}
+
+/* =====================================================
+   Меню игр
+   ===================================================== */
+.games-menu {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 1.5rem 1rem;
+    gap: 1rem;
+    width: 100%;
+    max-width: 480px;
+    margin: 0 auto;
+}
+.games-menu-rows {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    width: 100%;
+}
+.games-menu-row {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    width: 100%;
+}
+.games-menu-icon-btn {
+    flex: 0 0 48px;
+    height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #1e293b;
+    border-radius: 10px;
+    font-size: 1.3rem;
+    color: #f1f5f9;
+}
+.games-menu-main-btn {
+    flex: 1;
+    height: 48px;
+    background: #1e293b;
+    color: #f8fafc;
+    border: none;
+    border-radius: 10px;
+    font-size: 1rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    cursor: pointer;
+    text-align: center;
+    transition: background 0.15s;
+}
+.games-menu-main-btn:active {
+    background: #334155;
+}
+.games-menu-main-btn--training {
+    background: #312e81;
+}
+.games-menu-main-btn--training:active {
+    background: #3730a3;
+}
+.games-menu-rules-btn {
+    flex: 0 0 48px;
+    height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #f1f5f9;
+    border: 1.5px solid #cbd5e1;
+    border-radius: 10px;
+    font-size: 1.1rem;
+    color: #475569;
+    cursor: pointer;
+    transition: background 0.15s;
+}
+.games-menu-rules-btn:active {
+    background: #e2e8f0;
+}
+
+/* =====================================================
+   Модалка правил
+   ===================================================== */
+.games-rules-modal {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.5);
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    z-index: 1000;
+    padding: 1rem;
+}
+.games-rules-modal-inner {
+    background: #fff;
+    border-radius: 16px 16px 12px 12px;
+    padding: 1.5rem 1.25rem;
+    width: 100%;
+    max-width: 480px;
+    position: relative;
+    max-height: 80vh;
+    overflow-y: auto;
+}
+.games-rules-modal-inner h3 {
+    margin: 0 0 0.75rem;
+    font-size: 1.2rem;
+    color: #1e293b;
+}
+.games-rules-modal-inner ul {
+    padding-left: 1.25rem;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    color: #334155;
+    font-size: 0.9rem;
+    line-height: 1.5;
+}
+.games-rules-modal-close {
+    position: absolute;
+    top: 0.75rem;
+    right: 0.75rem;
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    color: #94a3b8;
+    cursor: pointer;
+    line-height: 1;
+}
+
+/* =====================================================
+   Тренировка — арена
+   ===================================================== */
+.training-arena {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 1rem;
+    gap: 0.75rem;
+    width: 100%;
+    max-width: 480px;
+    margin: 0 auto;
+}
+.training-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    gap: 0.75rem;
+}
+.training-hp-wrap {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    gap: 4px;
+}
+.training-hp-label {
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: #334155;
+}
+.training-hp-bar-bg {
+    height: 10px;
+    background: #e2e8f0;
+    border-radius: 6px;
+    overflow: hidden;
+}
+.training-hp-bar {
+    height: 100%;
+    border-radius: 6px;
+    transition: width 0.4s ease, background 0.4s ease;
+}
+.training-turn-label {
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: #64748b;
+    white-space: nowrap;
+}
+.training-timer-info {
+    font-size: 0.85rem;
+    color: #475569;
+    align-self: flex-start;
+}
+
+/* =====================================================
+   Фидбэк тренировки
+   ===================================================== */
+.training-feedback {
+    margin-top: 0.75rem;
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    text-align: center;
+    animation: fadeInUp 0.2s ease;
+}
+.training-feedback--correct { background: #dcfce7; color: #166534; }
+.training-feedback--crit    { background: #fef9c3; color: #713f12; font-size: 1rem; }
+.training-feedback--wrong   { background: #fee2e2; color: #991b1b; }
+
+/* =====================================================
+   Результат тренировки — дополнительный стиль
+   ===================================================== */
+.result-stat--highlight .result-stat-value {
+    color: #7c3aed;
+    font-size: 1.1rem;
+}
+
+@keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: translateY(0); }
 }
 
