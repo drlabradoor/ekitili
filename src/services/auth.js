@@ -2,7 +2,9 @@
 // Сессия хранится в httpOnly-cookie на сервере (см. server.js),
 // клиент лишь помнит user_id/username для отрисовки UI.
 
-// URL бэкенд API. На Vercel используется относительный путь, локально :3000
+import { BACKEND_URL } from '../config/env.js';
+
+// URL бэкенд API. На отдельном хосте (Render), локально localhost:3000
 export function getApiBaseUrl() {
     if (typeof window === 'undefined') {
         return 'http://localhost:3000/api';
@@ -12,9 +14,8 @@ export function getApiBaseUrl() {
         return 'http://localhost:3000/api';
     }
 
-    // На Vercel и в продакшене: относительный путь /api (API на том же домене)
-    // Локально на localhost:3000 тоже работает
-    return '/api';
+    // Используем URL из конфига (Render, Railway и т.д.)
+    return `${BACKEND_URL}/api`;
 }
 
 const API_BASE_URL = getApiBaseUrl();

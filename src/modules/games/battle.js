@@ -2,6 +2,7 @@
 import { userFlashcards } from '../../data/flashcards.js';
 import { unlockAchievement } from '../../services/achievements.js';
 import { recordActivity } from '../../services/streak.js';
+import { BACKEND_URL } from '../../config/env.js';
 import {
     renderLobby,
     renderSearching,
@@ -50,14 +51,15 @@ export function renderBattleTab() {
 function connectSocket() {
     if (socket && socket.connected) return;
 
-    // socket.io клиент загружается из серверного пути /socket.io/socket.io.esm.min.js
+    // socket.io клиент загружается через CDN
     // Используем глобальный io, подключённый через <script> в index.html
     if (typeof io === 'undefined') {
         console.warn('[Battle] socket.io client not loaded yet');
         return;
     }
 
-    socket = io({ transports: ['websocket', 'polling'] });
+    // Подключаемся к backend серверу (Render, Railway и т.д.)
+    socket = io(BACKEND_URL, { transports: ['websocket', 'polling'] });
 
     socket.on('connect', () => {
         console.log('[Battle] connected:', socket.id);

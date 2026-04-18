@@ -153,8 +153,9 @@ function verifySession(token) {
 function setSessionCookie(res, userId) {
     res.cookie(SESSION_COOKIE, signSession(userId), {
         httpOnly: true,
-        sameSite: 'lax',
-        secure: IS_PROD,
+        // Для cross-origin (frontend на Vercel, backend на Render): 'none' требует Secure
+        sameSite: IS_PROD ? 'none' : 'lax',
+        secure: IS_PROD,  // На продакшене HTTPS обязателен
         maxAge: SESSION_MAX_AGE_MS,
         path: '/'
     });

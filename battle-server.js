@@ -33,8 +33,13 @@ let waitingPlayer = null;
 const activeGames = new Map();
 
 function initBattleSocket(httpServer) {
+    // Парсим ALLOWED_ORIGINS из .env (разделены запятыми)
+    const allowedOrigins = process.env.ALLOWED_ORIGINS
+        ? process.env.ALLOWED_ORIGINS.split(',').map(o => o.trim())
+        : '*';
+
     const io = new Server(httpServer, {
-        cors: { origin: '*', methods: ['GET', 'POST'] }
+        cors: { origin: allowedOrigins, methods: ['GET', 'POST'] }
     });
 
     io.on('connection', (socket) => {
