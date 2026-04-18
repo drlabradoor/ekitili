@@ -46,9 +46,13 @@ app.use(cors({
         if (!origin) return cb(null, true); // same-origin (fetch без Origin)
         if (allowedOriginsEnv.includes(origin)) return cb(null, true);
         if (!IS_PROD && localOriginRegex.test(origin)) return cb(null, true);
+        // На Render разрешить https://test.ekitili.kz явно
+        if (origin === 'https://test.ekitili.kz' || origin === 'https://ekitili.kz') return cb(null, true);
         return cb(new Error('CORS: origin not allowed'));
     },
-    credentials: true
+    credentials: true,
+    methods: ['GET', 'POST', 'OPTIONS'],
+    allowedHeaders: ['Content-Type']
 }));
 
 app.use(express.json({ limit: '64kb' }));
