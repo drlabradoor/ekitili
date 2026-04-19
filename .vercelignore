@@ -8,11 +8,11 @@ node_modules
 
 # dev-артефакты
 graphify-out
-scripts
 database
 start-server.sh
 start-server.bat
 main.js.old
+scripts/apply_supabase.js
 
 # документация и конфиги редактора
 CLAUDE.md
