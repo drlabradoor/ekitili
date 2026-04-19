@@ -81,6 +81,9 @@ function connectSocket() {
         console.log('[Battle] connected:', socket.id);
     });
 
+    socket.io.on('reconnect_attempt', () => console.log('[Socket] reconnecting...'));
+    socket.io.on('reconnect_failed', () => console.warn('[Socket] reconnect failed'));
+
     socket.on('battle_waiting', () => {
         const container = document.getElementById('battle-container');
         if (container) {

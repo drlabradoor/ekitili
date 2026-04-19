@@ -21,6 +21,11 @@ CLAUDE.md
 .github
 memory
 
+# backend (runs on Render, not Vercel)
+app.js
+server.js
+battle-server.js
+
 # git
 .git
 .gitignore

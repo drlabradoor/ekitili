@@ -1,7 +1,6 @@
 import { userProfile, saveUserProfile } from '../data/user.js';
-import { getCurrentUser, getApiBaseUrl } from './auth.js';
-
-const API_BASE_URL = getApiBaseUrl();
+import { getCurrentUser } from './auth.js';
+import { apiPost, apiGet } from './apiClient.js';
 
 export const REQUIRED_ACHIEVEMENTS = {
     polyglot: {
@@ -77,12 +76,7 @@ async function saveAchievementsToServer() {
     if (!user || !user.userId) return;
 
     try {
-        await fetch(`${API_BASE_URL}/user/achievements`, {
-            method: 'POST',
-            credentials: 'include',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ achievements: userProfile.achievements })
-        });
+        await apiPost('/user/achievements', { achievements: userProfile.achievements });
     } catch (error) {
         console.error('Error saving achievements:', error);
     }
@@ -93,8 +87,8 @@ export async function loadUserAchievements() {
     if (!user || !user.userId) return;
 
     try {
-        const response = await fetch(`${API_BASE_URL}/user/achievements`, { credentials: 'include' });
-        if (response.ok) {
+        const response = await apiGet('/user/achievements');
+        if (response && response.ok) {
             const data = await response.json();
             if (data.achievements) {
                 userProfile.achievements = data.achievements;

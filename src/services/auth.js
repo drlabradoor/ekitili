@@ -1,45 +1,19 @@
 // Сервис для работы с регистрацией и аутентификацией.
-// Сессия хранится в httpOnly-cookie на сервере (см. server.js),
+// Сессия хранится в httpOnly-cookie на сервере (см. app.js),
 // клиент лишь помнит user_id/username для отрисовки UI.
 
-import { BACKEND_URL } from '../config/env.js';
+import { apiPost, apiGet } from './apiClient.js';
 
-// URL бэкенд API. На отдельном хосте (Render), локально localhost:3000
-export function getApiBaseUrl() {
-    if (typeof window === 'undefined') {
-        return 'http://localhost:3000/api';
-    }
-
-    if (window.location.protocol === 'file:' || !window.location.hostname || !window.location.hostname.trim()) {
-        return 'http://localhost:3000/api';
-    }
-
-    // Используем URL из конфига (Render, Railway и т.д.)
-    return `${BACKEND_URL}/api`;
-}
-
-const API_BASE_URL = getApiBaseUrl();
-
-// Все запросы к API должны ходить с сессионной кукой.
-const FETCH_OPTS = { credentials: 'include' };
-
-function jsonPost(path, body) {
-    return fetch(`${API_BASE_URL}${path}`, {
-        ...FETCH_OPTS,
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body || {})
-    });
-}
 
 /**
  * Регистрация нового пользователя
  */
 export async function registerUser(username, password) {
     try {
-        const response = await jsonPost('/register', { username, password });
-        const data = await response.json().catch(() => ({}));
+        const response = await apiPost('/register', { username, password });
+        if (!response) return { success: false, error: 'Сервер недоступен' };
 
+        const data = await response.json().catch(() => ({}));
         if (!response.ok) {
             return { success: false, error: data.error || 'Ошибка при регистрации' };
         }
@@ -51,10 +25,9 @@ export async function registerUser(username, password) {
         };
     } catch (error) {
         console.error('Ошибка регистрации:', error);
-        const errorMessage = error.message || 'Неизвестная ошибка';
         return {
             success: false,
-            error: `Не удалось подключиться к серверу. Проверьте, запущен ли бэкенд сервер на порту 3000. (${errorMessage})`
+            error: `Не удалось подключиться к серверу. (${error.message || 'Неизвестная ошибка'})`
         };
     }
 }
@@ -64,9 +37,10 @@ export async function registerUser(username, password) {
  */
 export async function loginUser(username, password) {
     try {
-        const response = await jsonPost('/login', { username, password });
-        const data = await response.json().catch(() => ({}));
+        const response = await apiPost('/login', { username, password });
+        if (!response) return { success: false, error: 'Сервер недоступен' };
 
+        const data = await response.json().catch(() => ({}));
         if (!response.ok) {
             return { success: false, error: data.error || 'Неверное имя пользователя или пароль' };
         }
@@ -78,10 +52,9 @@ export async function loginUser(username, password) {
         };
     } catch (error) {
         console.error('Ошибка входа:', error);
-        const errorMessage = error.message || 'Неизвестная ошибка';
         return {
             success: false,
-            error: `Не удалось подключиться к серверу. Проверьте, запущен ли бэкенд сервер на порту 3000. (${errorMessage})`
+            error: `Не удалось подключиться к серверу. (${error.message || 'Неизвестная ошибка'})`
         };
     }
 }
@@ -94,7 +67,7 @@ import { resetStreakData } from './streak.js';
  */
 export async function logoutUser() {
     try {
-        await jsonPost('/logout', {});
+        await apiPost('/logout', {});
     } catch (error) {
         console.warn('Logout request failed:', error);
     }
@@ -147,36 +120,12 @@ export function isAuthenticated() {
  */
 export async function fetchCurrentUser() {
     try {
-        const response = await fetch(`${API_BASE_URL}/me`, FETCH_OPTS);
-        if (!response.ok) return null;
+        const response = await apiGet('/me');
+        if (!response || !response.ok) return null;
         const data = await response.json();
         return data && data.user ? data.user : null;
     } catch (error) {
         console.error('fetchCurrentUser failed:', error);
         return null;
-    }
-}
-
-/**
- * Проверить доступность API сервера
- */
-export async function checkApiConnection() {
-    try {
-        const healthUrl = `${API_BASE_URL}/health`;
-        const response = await fetch(healthUrl, {
-            method: 'GET',
-            headers: { 'Content-Type': 'application/json' }
-        });
-
-        if (response.ok) {
-            const data = await response.json();
-            console.log('✓ API сервер доступен:', data);
-            return true;
-        }
-        return false;
-    } catch (error) {
-        console.error('✗ API сервер недоступен:', error);
-        console.error('Попытка подключения к:', API_BASE_URL);
-        return false;
     }
 }

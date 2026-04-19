@@ -1,4 +1,4 @@
-// Локальный dev entry point. На Vercel используется api/index.js.
+// Entry point: создаёт HTTP-сервер, подключает socket.io (battle).
 // Запуск: `npm start` или `node server.js`.
 
 require('dotenv').config();
@@ -29,14 +29,12 @@ server.listen(PORT, '0.0.0.0', () => {
     const localIP = getLocalIPAddress();
     console.log('');
     console.log('═══════════════════════════════════════════════════════');
-    console.log('  EkiTili Server (local dev)');
+    console.log(`  EkiTili Server (${process.env.NODE_ENV || 'development'})`);
     console.log('═══════════════════════════════════════════════════════');
-    console.log(`  ✓ Local:    http://localhost:${PORT}`);
-    console.log(`  ✓ Network:  http://${localIP}:${PORT}`);
-    console.log(`  ✓ Health:   http://localhost:${PORT}/api/health`);
-    console.log(`  ✓ Battle:   socket.io ready`);
-    console.log('');
-    console.log('  Press Ctrl+C to stop the server');
+    console.log(`  Local:    http://localhost:${PORT}`);
+    console.log(`  Network:  http://${localIP}:${PORT}`);
+    console.log(`  Health:   http://localhost:${PORT}/api/health`);
+    console.log(`  Battle:   socket.io ready`);
     console.log('═══════════════════════════════════════════════════════');
     console.log('');
 });

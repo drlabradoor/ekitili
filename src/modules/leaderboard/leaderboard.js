@@ -1,16 +1,15 @@
 // Логика лидерборда
 import { renderLeaderboard } from './leaderboardRenderer.js';
-import { getApiBaseUrl, getCurrentUser } from '../../services/auth.js';
-
-const API_BASE_URL = getApiBaseUrl();
+import { getCurrentUser } from '../../services/auth.js';
+import { apiGetPublic, apiGet } from '../../services/apiClient.js';
 
 /**
  * Загрузка лидерборда с сервера
  */
 async function loadLeaderboard(period) {
     try {
-        const response = await fetch(`${API_BASE_URL}/leaderboard/${period}`);
-        if (response.ok) {
+        const response = await apiGetPublic(`/leaderboard/${period}`);
+        if (response && response.ok) {
             const data = await response.json();
             return data;
         } else {
@@ -31,10 +30,10 @@ async function loadUserLeaderboardData() {
     if (!user || !user.userId) {
         return;
     }
-    
+
     try {
-        const response = await fetch(`${API_BASE_URL}/leaderboard/me`, { credentials: 'include' });
-        if (response.ok) {
+        const response = await apiGet('/leaderboard/me');
+        if (response && response.ok) {
             const data = await response.json();
             const userPlace = document.getElementById('leaderboardUserPlace');
             const userPoints = document.getElementById('leaderboardUserPoints');
@@ -59,10 +58,10 @@ export async function initLeaderboard() {
 export async function updateLeaderboard() {
     const weekData = await loadLeaderboard('week');
     const monthData = await loadLeaderboard('month');
-    
+
     renderLeaderboard(weekData, 'leaderboardWeek');
     renderLeaderboard(monthData, 'leaderboardMonth');
-    
+
     await loadUserLeaderboardData();
 }
 
@@ -75,17 +74,16 @@ export async function renderLeaderboardTab() {
     const monthContainer = document.getElementById('leaderboardMonth');
     if (weekContainer) weekContainer.innerHTML = '';
     if (monthContainer) monthContainer.innerHTML = '';
-    
+
     // Сбрасываем данные пользователя
     const userPlace = document.getElementById('leaderboardUserPlace');
     const userPoints = document.getElementById('leaderboardUserPoints');
     if (userPlace) userPlace.textContent = '-';
     if (userPoints) userPoints.textContent = '0★';
-    
+
     // Загружаем данные
     await updateLeaderboard();
 }
 
 // Экспортируем функцию для глобального доступа
 window.updateLeaderboard = updateLeaderboard;
-

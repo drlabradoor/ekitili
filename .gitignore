@@ -1,4 +1,9 @@
 node_modules/
 .env
 config.js
-*.md
+
+# dev/tooling artifacts
+.claude/
+graphify-out/
+main.js.old
+PAPER_*.md

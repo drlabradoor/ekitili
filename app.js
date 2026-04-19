@@ -1,6 +1,6 @@
 // Express-приложение EkiTili — чистый экспорт без .listen().
-// Используется локальным server.js и serverless-функцией api/index.js (Vercel).
-// dotenv загружается в entry-points (server.js / api/index.js), не тут.
+// Используется локальным server.js (dev) и Render (production).
+// dotenv загружается в entry-point (server.js), не тут.
 
 const express = require('express');
 const cors = require('cors');
@@ -10,15 +10,14 @@ const crypto = require('crypto');
 const bcrypt = require('bcrypt');
 const rateLimit = require('express-rate-limit');
 const cookieParser = require('cookie-parser');
+const helmet = require('helmet');
 
 const app = express();
 const BCRYPT_ROUNDS = 12;
-const IS_PROD = process.env.NODE_ENV === 'production' || Boolean(process.env.VERCEL);
+const IS_PROD = process.env.NODE_ENV === 'production';
 
 // =====================================================
-// Session secret — в production/Vercel обязателен.
-// Без него каждая serverless-инвокация получит свой одноразовый секрет
-// и будет инвалидировать чужие сессии.
+// Session secret — в production обязателен.
 // =====================================================
 if (!process.env.SESSION_SECRET) {
     if (IS_PROD) {
@@ -39,15 +38,20 @@ const allowedOriginsEnv = (process.env.ALLOWED_ORIGINS || '')
     .map(s => s.trim())
     .filter(Boolean);
 
+if (IS_PROD && allowedOriginsEnv.length === 0) {
+    console.warn('[CORS] WARNING: ALLOWED_ORIGINS not set in production!');
+}
+console.log('[CORS] allowedOrigins:', allowedOriginsEnv);
+
 const localOriginRegex = /^https?:\/\/(localhost|127\.0\.0\.1|(\d{1,3}\.){3}\d{1,3})(:\d+)?$/;
 
 app.use(cors({
     origin(origin, cb) {
-        if (!origin) return cb(null, true); // same-origin (fetch без Origin)
+        if (!origin) return cb(null, true);
         if (allowedOriginsEnv.includes(origin)) return cb(null, true);
         if (!IS_PROD && localOriginRegex.test(origin)) return cb(null, true);
-        // На Render разрешить https://test.ekitili.kz явно
-        if (origin === 'https://test.ekitili.kz' || origin === 'https://ekitili.kz') return cb(null, true);
+        if (/^https:\/\/ekitili[a-z0-9-]*\.vercel\.app$/.test(origin)) return cb(null, true);
+        console.warn(`[CORS] blocked: ${origin}`);
         return cb(new Error('CORS: origin not allowed'));
     },
     credentials: true,
@@ -55,20 +59,31 @@ app.use(cors({
     allowedHeaders: ['Content-Type']
 }));
 
+app.use(helmet({ contentSecurityPolicy: false }));
 app.use(express.json({ limit: '64kb' }));
 app.use(cookieParser());
 
-// Vercel отдаёт X-Forwarded-For — нужно для rate-limiter'а и корректного req.ip.
+// Request log
+app.use((req, res, next) => {
+    const start = Date.now();
+    res.on('finish', () => {
+        const uid = (req.user && req.user.userId) || '-';
+        console.log(`[${req.method}] ${req.path} ${res.statusCode} ${Date.now() - start}ms uid=${uid}`);
+    });
+    next();
+});
+
+// Render/Railway проксируют через load balancer — нужно для rate-limiter'а.
 app.set('trust proxy', 1);
 
-// Статика: локально раздаём корень репо. На Vercel файлы index.html/src/**
-// перехватываются CDN до вызова функции, так что этот middleware там не мешает.
-app.use(express.static(path.join(__dirname)));
+// Статика — только для локальной разработки. В production фронтенд на Vercel.
+if (!IS_PROD) {
+    app.use(express.static(path.join(__dirname)));
+}
 
 // =====================================================
-// PostgreSQL (Supabase) connection pool
-// Для Vercel используйте Transaction Pooler (порт 6543) — Session pool
-// держит долгоживущие соединения, которые serverless не переиспользует.
+// PostgreSQL (Supabase) connection pool.
+// Supabase free tier ~15 соединений всего. 5 оставляет место для Dashboard/Studio.
 // =====================================================
 const pool = new Pool({
     host: process.env.PGHOST,
@@ -77,9 +92,7 @@ const pool = new Pool({
     password: process.env.PGPASSWORD,
     database: process.env.PGDATABASE,
     ssl: { rejectUnauthorized: false },
-    // В serverless один контейнер обычно обслуживает одну инвокацию за раз —
-    // большой пул бесполезен и жрёт слоты Supabase.
-    max: IS_PROD ? 1 : 10,
+    max: 5,
     idleTimeoutMillis: 30000,
     connectionTimeoutMillis: 10000
 });
@@ -126,8 +139,8 @@ async function verifyPassword(password, storedHash) {
 
 // =====================================================
 // Сессии — подписанная кука session=<user_id>.<hmac>
-// HttpOnly + SameSite=Lax (Strict ломает некоторые flows на Vercel preview).
-// Secure включается автоматически в проде (NODE_ENV=production или VERCEL=1).
+// HttpOnly + SameSite=None (cross-origin: frontend на Vercel, backend на Render).
+// Secure включается автоматически в проде.
 // =====================================================
 const SESSION_COOKIE = 'ekitili_session';
 const SESSION_MAX_AGE_MS = 30 * 24 * 60 * 60 * 1000; // 30 дней
@@ -157,9 +170,8 @@ function verifySession(token) {
 function setSessionCookie(res, userId) {
     res.cookie(SESSION_COOKIE, signSession(userId), {
         httpOnly: true,
-        // Для cross-origin (frontend на Vercel, backend на Render): 'none' требует Secure
         sameSite: IS_PROD ? 'none' : 'lax',
-        secure: IS_PROD,  // На продакшене HTTPS обязателен
+        secure: IS_PROD,
         maxAge: SESSION_MAX_AGE_MS,
         path: '/'
     });
@@ -200,10 +212,7 @@ const MAX_ACHIEVEMENTS = 200;
 const MAX_STREAK_HISTORY_DAYS = 3000;
 
 // =====================================================
-// Rate limiting
-// На serverless in-memory store сбрасывается между cold start'ами — защита
-// получается частичной. Для жёсткого лимита нужен распределённый store
-// (Upstash Redis). Пока держим as-is — хоть какая-то защита.
+// Rate limiting (in-memory store, подходит для single-process на Render)
 // =====================================================
 const authLimiter = rateLimit({
     windowMs: 60 * 1000,
@@ -577,23 +586,24 @@ app.get('/api/health', async (req, res) => {
             database: 'connected',
             time: rows[0].now,
             provider: 'supabase-postgres',
-            runtime: process.env.VERCEL ? 'vercel' : 'node'
+            runtime: 'node'
         });
     } catch (err) {
         res.status(503).json({
             status: 'degraded',
             database: 'disconnected',
             error: err.message,
-            runtime: process.env.VERCEL ? 'vercel' : 'node'
+            runtime: 'node'
         });
     }
 });
 
-// SPA catch-all — только для локального dev. На Vercel статика отдаётся CDN,
-// а несуществующие пути (мимо /api/*) вернут 404 от платформы.
-app.get('*', (req, res) => {
-    res.sendFile(path.join(__dirname, 'index.html'));
-});
+// SPA catch-all — только для локального dev.
+if (!IS_PROD) {
+    app.get('*', (req, res) => {
+        res.sendFile(path.join(__dirname, 'index.html'));
+    });
+}
 
 // Централизованный error handler.
 // eslint-disable-next-line no-unused-vars

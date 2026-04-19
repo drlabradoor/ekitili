@@ -41,13 +41,26 @@ let waitingPlayer = null;
 const activeGames = new Map();
 
 function initBattleSocket(httpServer) {
-    // Парсим ALLOWED_ORIGINS из .env (разделены запятыми)
     const allowedOrigins = process.env.ALLOWED_ORIGINS
         ? process.env.ALLOWED_ORIGINS.split(',').map(o => o.trim())
-        : '*';
+        : null;
+
+    if (!allowedOrigins && process.env.NODE_ENV === 'production') {
+        throw new Error('CORS misconfiguration: ALLOWED_ORIGINS not set in production.');
+    }
 
     const io = new Server(httpServer, {
-        cors: { origin: allowedOrigins, methods: ['GET', 'POST'] }
+        cors: {
+            origin(origin, cb) {
+                if (!origin) return cb(null, true);
+                if (allowedOrigins && allowedOrigins.includes(origin)) return cb(null, true);
+                if (/^https:\/\/ekitili[a-z0-9-]*\.vercel\.app$/.test(origin)) return cb(null, true);
+                if (!allowedOrigins) return cb(null, true); // dev: no ALLOWED_ORIGINS = allow all
+                return cb(new Error('CORS: origin not allowed'));
+            },
+            credentials: true,
+            methods: ['GET', 'POST']
+        }
     });
 
     io.on('connection', (socket) => {

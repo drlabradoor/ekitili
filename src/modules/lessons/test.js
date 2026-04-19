@@ -1,9 +1,8 @@
 // Компонент теста для определения уровня знания казахского языка
-import { getCurrentUser, getApiBaseUrl } from '../../services/auth.js';
+import { getCurrentUser } from '../../services/auth.js';
 import { showLogin } from '../auth/auth.js';
 import { unlockAchievement } from '../../services/achievements.js';
-
-const API_BASE_URL = getApiBaseUrl();
+import { apiPost } from '../../services/apiClient.js';
 
 let testQuestions = [];
 let currentQuestionIndex = 0;
@@ -311,19 +310,12 @@ async function showResults() {
     const user = getCurrentUser();
     if (user && user.userId) {
         try {
-            const response = await fetch(`${API_BASE_URL}/test-result`, {
-                method: 'POST',
-                credentials: 'include',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
+            const response = await apiPost('/test-result', {
                     score: correctAnswers,
                     total_questions: totalQuestions
-                })
-            });
+                });
 
-            if (response.ok) {
+            if (response && response.ok) {
                 console.log('Test result saved successfully');
                 // Обновляем лидерборд
                 if (window.updateLeaderboard) {

@@ -2,7 +2,8 @@
 // Кешируется в localStorage, синхронизируется с сервером (Supabase jsonb)
 // при каждой учебной активности. Вехи 3/7/30 дней дают достижения.
 import { addDays } from '../utils/date.js';
-import { getCurrentUser, getApiBaseUrl } from './auth.js';
+import { getCurrentUser } from './auth.js';
+import { apiPost, apiGet } from './apiClient.js';
 import { unlockAchievement } from './achievements.js';
 
 const STORAGE_KEY = 'ekitili_streak_v1';
@@ -203,12 +204,7 @@ async function syncStreakToServer(data) {
     if (!user || !user.userId) return;
 
     try {
-        await fetch(`${getApiBaseUrl()}/user/streak`, {
-            method: 'POST',
-            credentials: 'include',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ streak: data })
-        });
+        await apiPost('/user/streak', { streak: data });
     } catch (error) {
         console.error('Ошибка синхронизации стрика:', error);
     }
@@ -224,8 +220,8 @@ export async function loadStreakFromServer() {
     if (!user || !user.userId) return;
 
     try {
-        const response = await fetch(`${getApiBaseUrl()}/user/streak`, { credentials: 'include' });
-        if (!response.ok) return;
+        const response = await apiGet('/user/streak');
+        if (!response || !response.ok) return;
         const payload = await response.json();
         const serverStreak = payload && payload.streak ? payload.streak : null;
         if (!serverStreak || typeof serverStreak !== 'object') return;

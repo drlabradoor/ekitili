@@ -1,7 +1,7 @@
 // Соло-режим тренировки: механика батла без соперника
 import { userFlashcards } from '../../data/flashcards.js';
 import { getCardSVG } from './battleRenderer.js';
-import { getApiBaseUrl } from '../../services/auth.js';
+import { apiPost } from '../../services/apiClient.js';
 
 const TRAINING_INITIAL_HP  = 100;
 const TRAINING_MAX_DAMAGE  = 25;
@@ -309,15 +309,9 @@ function showResult(container) {
 async function submitScore(score, totalQuestions) {
     if (score === 0) return;
     try {
-        const base = getApiBaseUrl();
-        const res = await fetch(`${base}/test-result`, {
-            method: 'POST',
-            credentials: 'include',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ score, total_questions: totalQuestions })
-        });
-        if (!res.ok) {
-            const err = await res.json().catch(() => ({}));
+        const res = await apiPost('/test-result', { score, total_questions: totalQuestions });
+        if (!res || !res.ok) {
+            const err = res ? await res.json().catch(() => ({})) : {};
             console.warn('[Training] score submit failed:', err);
         }
     } catch (e) {
