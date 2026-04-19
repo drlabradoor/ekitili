@@ -109,5 +109,5 @@ NODE_ENV=production
 
 ### Vercel (frontend)
 ```
-BACKEND_URL=https://ekitili-backend.onrender.com
+BACKEND_URL=https://ekitili-api.onrender.com
 ```
