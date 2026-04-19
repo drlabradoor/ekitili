@@ -6,27 +6,35 @@ const { Server } = require('socket.io');
 
 const INITIAL_HP = 100;
 const MAX_DAMAGE = 25;        // урон за ошибку / таймаут
-const PARRY_WINDOW = 2;       // секунды: ответ в этом окне = парирование (0 урон)
+const MAX_TIMER = 6;          // макс время ответа
+const MIN_TIMER = 3;          // мин время ответа
+const MAX_PARRY_WINDOW = 2;   // окно парирования на макс времени
+const MIN_PARRY_WINDOW = 1;   // окно парирования на мин времени
 const COMBO_THRESHOLD = 3;    // 3 подряд = комбо
 const COMBO_MULTIPLIER = 1.5;
 const NUM_OPTIONS = 4;        // вариантов ответа
 
-// Ступенчатая система урона по времени реакции
-const DAMAGE_TIERS = [
-    { maxTime: 2, damage: 0 },    // 0-2 сек = парирование
-    { maxTime: 3, damage: 10 },   // 2-3 сек = 10 урона
-    { maxTime: 4, damage: 15 },   // 3-4 сек = 15 урона
-    { maxTime: Infinity, damage: 25 } // 4+ сек = 25 урона (максимум)
-];
+// Ступенчатая система урона по времени реакции (адаптируется к timerSeconds)
+function getDamageTiers(timerSeconds) {
+    // Вычисляем окно парирования процентно
+    const parryWindow = MAX_PARRY_WINDOW - (MAX_PARRY_WINDOW - MIN_PARRY_WINDOW) * ((MAX_TIMER - timerSeconds) / (MAX_TIMER - MIN_TIMER));
 
-// Таймер: начало 5 сек, уменьшается линейно за 5 ходов до 2 сек
+    return [
+        { maxTime: parryWindow, damage: 0 },    // парирование = 0 урона
+        { maxTime: parryWindow + 1, damage: 10 },
+        { maxTime: parryWindow + 2, damage: 15 },
+        { maxTime: Infinity, damage: 25 }       // макс урон
+    ];
+}
+
+// Таймер: начало 6 сек, уменьшается линейно за 5 ходов до 3 сек
 function getTimerForTurn(turn) {
     if (turn <= 5) {
-        // Ход 1: 5 сек, Ход 5: 2 сек
-        const timer = 5 - (turn - 1) * 0.75;
-        return Math.max(2, timer);
+        // Ход 1: 6 сек, Ход 5: 3 сек
+        const timer = MAX_TIMER - (turn - 1) * ((MAX_TIMER - MIN_TIMER) / 4);
+        return Math.max(MIN_TIMER, timer);
     }
-    return 2;  // минимум 2 сек
+    return MIN_TIMER;
 }
 
 let waitingPlayer = null;
@@ -216,19 +224,22 @@ function handleAttackCard(io, socket, data) {
     game.correctAnswer = card.front; // правильный ответ — казахское слово
     game.status = 'defending';
 
-    // Генерируем варианты ответа (казахские слова)
+    // Генерируем варианты ответа (казахские слова — front)
     const attacker = game.players[game.attackerIdx];
     const options = generateOptions(card.front, attacker.cards);
     game.options = options;
 
-    // Учитываем frost — уменьшаем таймер если активен
+    // DRAFT: Спецприёмы (пока отключены, переделываем механику)
+    // const defIdx = 1 - game.attackerIdx;
+    // const defender = game.players[defIdx];
+    // let timerForThisTurn = game.timerSeconds;
+    // if (defender.activeFrost) {
+    //     timerForThisTurn = Math.max(MIN_TIMER, timerForThisTurn - 3);
+    //     defender.activeFrost = false;
+    // }
     const defIdx = 1 - game.attackerIdx;
     const defender = game.players[defIdx];
     let timerForThisTurn = game.timerSeconds;
-    if (defender.activeFrost) {
-        timerForThisTurn = Math.max(5, timerForThisTurn - 3);
-        defender.activeFrost = false;
-    }
 
     game.defenseStartTime = Date.now();
     game.defenseTimerSeconds = timerForThisTurn;
@@ -278,12 +289,13 @@ function handleDefendAnswer(io, socket, data) {
         defender.correctAnswers++;
         if (defender.combo > defender.maxCombo) defender.maxCombo = defender.combo;
 
-        // Ступенчатая система урона по времени реакции
+        // Ступенчатая система урона по времени реакции (адаптирована к текущему таймеру)
         let damage = 0;
-        const isParry = elapsed <= PARRY_WINDOW;
+        const damageTiers = getDamageTiers(game.defenseTimerSeconds);
+        const isParry = elapsed <= damageTiers[0].maxTime;
         if (!isParry) {
             // Найти уровень урона по времени
-            for (const tier of DAMAGE_TIERS) {
+            for (const tier of damageTiers) {
                 if (elapsed <= tier.maxTime) {
                     damage = tier.damage;
                     break;
@@ -295,14 +307,15 @@ function handleDefendAnswer(io, socket, data) {
         if (damage > 0 && attacker.combo >= COMBO_THRESHOLD) {
             damage = Math.round(damage * COMBO_MULTIPLIER);
         }
-        if (damage > 0 && attacker.activeDouble) {
-            damage *= 2;
-            attacker.activeDouble = false;
-        }
-        if (damage > 0 && defender.activeShield) {
-            damage = 0;
-            defender.activeShield = false;
-        }
+        // DRAFT: Спецприёмы отключены
+        // if (damage > 0 && attacker.activeDouble) {
+        //     damage *= 2;
+        //     attacker.activeDouble = false;
+        // }
+        // if (damage > 0 && defender.activeShield) {
+        //     damage = 0;
+        //     defender.activeShield = false;
+        // }
 
         defender.hp = Math.max(0, defender.hp - damage);
         const targetSide = damage > 0 ? (defIdx === 0 ? 'left' : 'right') : null;
@@ -327,14 +340,15 @@ function handleDefendAnswer(io, socket, data) {
         if (attacker.combo >= COMBO_THRESHOLD) {
             damage = Math.round(damage * COMBO_MULTIPLIER);
         }
-        if (attacker.activeDouble) {
-            damage *= 2;
-            attacker.activeDouble = false;
-        }
-        if (defender.activeShield) {
-            damage = 0;
-            defender.activeShield = false;
-        }
+        // DRAFT: Спецприёмы отключены
+        // if (attacker.activeDouble) {
+        //     damage *= 2;
+        //     attacker.activeDouble = false;
+        // }
+        // if (defender.activeShield) {
+        //     damage = 0;
+        //     defender.activeShield = false;
+        // }
 
         defender.hp = Math.max(0, defender.hp - damage);
         const targetSide = defIdx === 0 ? 'left' : 'right';
@@ -374,8 +388,9 @@ function handleDefenseTimeout(io, game) {
     defender.combo = 0;
     let damage = MAX_DAMAGE;
     if (attacker.combo >= COMBO_THRESHOLD) damage = Math.round(damage * COMBO_MULTIPLIER);
-    if (attacker.activeDouble) { damage *= 2; attacker.activeDouble = false; }
-    if (defender.activeShield) { damage = 0; defender.activeShield = false; }
+    // DRAFT: Спецприёмы отключены
+    // if (attacker.activeDouble) { damage *= 2; attacker.activeDouble = false; }
+    // if (defender.activeShield) { damage = 0; defender.activeShield = false; }
 
     defender.hp = Math.max(0, defender.hp - damage);
     const targetSide = defIdx === 0 ? 'left' : 'right';
@@ -471,35 +486,36 @@ function endGame(io, game, winnerIdx) {
 }
 
 // =====================================================
-// Спецприёмы
+// Спецприёмы (DRAFT: отключены, переделываем механику)
 // =====================================================
 function handleUseSpecial(io, socket, data) {
-    const game = getGameForSocket(socket);
-    if (!game || game.status === 'over') return;
-
-    const playerIdx = socket.data.playerIdx;
-    const player = game.players[playerIdx];
-
-    if (player.specialCharges <= 0) return;
-
-    const special = data.special;
-    if (!['shield', 'frost', 'double'].includes(special)) return;
-
-    // Нельзя использовать уже активный
-    if (special === 'shield' && player.activeShield) return;
-    if (special === 'frost' && player.activeFrost) return;
-    if (special === 'double' && player.activeDouble) return;
-
-    player.specialCharges--;
-    if (special === 'shield') player.activeShield = true;
-    if (special === 'frost') player.activeFrost = true;
-    if (special === 'double') player.activeDouble = true;
-
-    io.to(game.id).emit('special_used', {
-        playerIdx,
-        special,
-        specialCharges: player.specialCharges
-    });
+    // DRAFT MODE: спецприёмы отключены пока переделываем механику
+    // const game = getGameForSocket(socket);
+    // if (!game || game.status === 'over') return;
+    //
+    // const playerIdx = socket.data.playerIdx;
+    // const player = game.players[playerIdx];
+    //
+    // if (player.specialCharges <= 0) return;
+    //
+    // const special = data.special;
+    // if (!['shield', 'frost', 'double'].includes(special)) return;
+    //
+    // // Нельзя использовать уже активный
+    // if (special === 'shield' && player.activeShield) return;
+    // if (special === 'frost' && player.activeFrost) return;
+    // if (special === 'double' && player.activeDouble) return;
+    //
+    // player.specialCharges--;
+    // if (special === 'shield') player.activeShield = true;
+    // if (special === 'frost') player.activeFrost = true;
+    // if (special === 'double') player.activeDouble = true;
+    //
+    // io.to(game.id).emit('special_used', {
+    //     playerIdx,
+    //     special,
+    //     specialCharges: player.specialCharges
+    // });
 }
 
 // =====================================================

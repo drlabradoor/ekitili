@@ -1,29 +1,4 @@
-# Dependencies
 node_modules/
-
-# Configuration
-config.js
 .env
-
-# Logs
-*.log
-npm-debug.log*
-
-# OS
-.DS_Store
-Thumbs.db
-
-# IDE
-.vscode/
-.idea/
-*.swp
-*.swo
-
-# Build
-dist/
-build/
-
-# Tooling / generated output
-.claude/
-graphify-out/
-
+config.js
+*.md
