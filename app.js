@@ -598,6 +598,198 @@ app.get('/api/health', async (req, res) => {
     }
 });
 
+// =====================================================
+// API: SRS — получить все слова пользователя
+// =====================================================
+app.get('/api/user/words', requireAuth, async (req, res, next) => {
+    try {
+        const { rows } = await pool.query(
+            `SELECT word_id, srs_level, status, next_review, last_review,
+                    total_reviews, total_correct, total_incorrect, total_near,
+                    enrolled_from_lesson, enrolled_at, ru_level,
+                    ru_next_review, ru_last_review, updated_at
+             FROM user_words WHERE user_id = $1
+             ORDER BY updated_at DESC`,
+            [req.user.userId]
+        );
+        const words = rows.map(r => ({
+            wordId: r.word_id,
+            srsLevel: r.srs_level,
+            status: r.status,
+            nextReview: r.next_review,
+            lastReview: r.last_review,
+            totalReviews: r.total_reviews,
+            totalCorrect: r.total_correct,
+            totalIncorrect: r.total_incorrect,
+            totalNear: r.total_near,
+            enrolledFromLessonId: r.enrolled_from_lesson,
+            enrolledAt: r.enrolled_at,
+            ruLevel: r.ru_level,
+            ruNextReview: r.ru_next_review,
+            ruLastReview: r.ru_last_review,
+            updatedAt: r.updated_at
+        }));
+        res.json({ words });
+    } catch (error) {
+        next(error);
+    }
+});
+
+// =====================================================
+// API: SRS — результат одного ревью
+// =====================================================
+app.post('/api/user/words/review', requireAuth, async (req, res, next) => {
+    const { wordId, direction, outcome, attemptNumber, clientTimestamp, userWord } = req.body || {};
+    if (!wordId || typeof wordId !== 'string' || wordId.length > 100) {
+        return res.status(400).json({ error: 'wordId required' });
+    }
+    if (!['kz_to_ru', 'ru_to_kz'].includes(direction)) {
+        return res.status(400).json({ error: 'direction must be kz_to_ru or ru_to_kz' });
+    }
+    if (!['exact', 'near', 'wrong'].includes(outcome)) {
+        return res.status(400).json({ error: 'outcome must be exact, near, or wrong' });
+    }
+    if (!userWord || typeof userWord !== 'object') {
+        return res.status(400).json({ error: 'userWord required' });
+    }
+
+    const srsLevel  = Math.max(1, Math.min(5, Number(userWord.srsLevel) || 1));
+    const ruLevel   = Math.max(0, Math.min(5, Number(userWord.ruLevel) || 0));
+    const status    = ['new', 'learning', 'reviewed', 'mastered'].includes(userWord.status) ? userWord.status : 'learning';
+    const nextReview = userWord.nextReview || null;
+    const ruNextReview = userWord.ruNextReview || null;
+    const ruLastReview = userWord.ruLastReview || null;
+
+    try {
+        await pool.query(
+            `INSERT INTO user_words (
+                user_id, word_id, srs_level, status, next_review, last_review,
+                total_reviews, total_correct, total_incorrect, total_near,
+                enrolled_from_lesson, enrolled_at, ru_level, ru_next_review, ru_last_review, updated_at
+             ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,NOW(),$12,$13,$14,NOW())
+             ON CONFLICT (user_id, word_id) DO UPDATE SET
+                srs_level       = EXCLUDED.srs_level,
+                status          = EXCLUDED.status,
+                next_review     = EXCLUDED.next_review,
+                last_review     = EXCLUDED.last_review,
+                total_reviews   = EXCLUDED.total_reviews,
+                total_correct   = EXCLUDED.total_correct,
+                total_incorrect = EXCLUDED.total_incorrect,
+                total_near      = EXCLUDED.total_near,
+                ru_level        = EXCLUDED.ru_level,
+                ru_next_review  = EXCLUDED.ru_next_review,
+                ru_last_review  = EXCLUDED.ru_last_review,
+                updated_at      = NOW()`,
+            [
+                req.user.userId, wordId, srsLevel, status,
+                nextReview, new Date().toISOString(),
+                (userWord.totalReviews || 0), (userWord.totalCorrect || 0),
+                (userWord.totalIncorrect || 0), (userWord.totalNear || 0),
+                userWord.enrolledFromLessonId || null,
+                ruLevel, ruNextReview, ruLastReview
+            ]
+        );
+
+        // Обновляем daily_goal счётчик в user_accounts
+        const { rows: dailyRows } = await pool.query(
+            `SELECT daily_goal FROM user_accounts WHERE user_id = $1`,
+            [req.user.userId]
+        );
+        const goal = dailyRows[0]?.daily_goal ?? 15;
+
+        res.json({ success: true, daily: { goal } });
+    } catch (error) {
+        next(error);
+    }
+});
+
+// =====================================================
+// API: SRS — зачислить слова в базу пользователя
+// =====================================================
+app.post('/api/user/words/enroll', requireAuth, async (req, res, next) => {
+    const { wordIds, fromLesson } = req.body || {};
+    if (!Array.isArray(wordIds) || wordIds.length === 0) {
+        return res.status(400).json({ error: 'wordIds array required' });
+    }
+    if (wordIds.length > 200) {
+        return res.status(400).json({ error: 'Too many wordIds' });
+    }
+
+    const today = new Date().toISOString().slice(0, 10);
+    const lesson = typeof fromLesson === 'string' && fromLesson.length <= 100 ? fromLesson : null;
+
+    try {
+        for (const wordId of wordIds) {
+            if (typeof wordId !== 'string' || wordId.length > 100) continue;
+            await pool.query(
+                `INSERT INTO user_words (user_id, word_id, next_review, enrolled_from_lesson)
+                 VALUES ($1, $2, $3, $4)
+                 ON CONFLICT (user_id, word_id) DO NOTHING`,
+                [req.user.userId, wordId, today, lesson]
+            );
+        }
+        res.json({ success: true, enrolled: wordIds.length });
+    } catch (error) {
+        next(error);
+    }
+});
+
+// =====================================================
+// API: SRS — bulk sync (offline → online)
+// =====================================================
+app.post('/api/user/words/bulk', requireAuth, async (req, res, next) => {
+    const { words } = req.body || {};
+    if (!Array.isArray(words)) {
+        return res.status(400).json({ error: 'words array required' });
+    }
+    if (words.length > 500) {
+        return res.status(400).json({ error: 'Too many words in bulk' });
+    }
+
+    try {
+        for (const uw of words) {
+            if (!uw || typeof uw.wordId !== 'string') continue;
+            const srsLevel = Math.max(1, Math.min(5, Number(uw.srsLevel) || 1));
+            const ruLevel  = Math.max(0, Math.min(5, Number(uw.ruLevel) || 0));
+            const status   = ['new', 'learning', 'reviewed', 'mastered'].includes(uw.status) ? uw.status : 'learning';
+
+            await pool.query(
+                `INSERT INTO user_words (
+                    user_id, word_id, srs_level, status, next_review, last_review,
+                    total_reviews, total_correct, total_incorrect, total_near,
+                    enrolled_from_lesson, enrolled_at, ru_level, ru_next_review, ru_last_review, updated_at
+                 ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16)
+                 ON CONFLICT (user_id, word_id) DO UPDATE SET
+                    srs_level       = EXCLUDED.srs_level,
+                    status          = EXCLUDED.status,
+                    next_review     = EXCLUDED.next_review,
+                    last_review     = EXCLUDED.last_review,
+                    total_reviews   = EXCLUDED.total_reviews,
+                    total_correct   = EXCLUDED.total_correct,
+                    total_incorrect = EXCLUDED.total_incorrect,
+                    total_near      = EXCLUDED.total_near,
+                    ru_level        = EXCLUDED.ru_level,
+                    ru_next_review  = EXCLUDED.ru_next_review,
+                    ru_last_review  = EXCLUDED.ru_last_review,
+                    updated_at      = EXCLUDED.updated_at
+                 WHERE EXCLUDED.updated_at > user_words.updated_at`,
+                [
+                    req.user.userId, uw.wordId, srsLevel, status,
+                    uw.nextReview || null, uw.lastReview || null,
+                    uw.totalReviews || 0, uw.totalCorrect || 0,
+                    uw.totalIncorrect || 0, uw.totalNear || 0,
+                    uw.enrolledFromLessonId || null, uw.enrolledAt || new Date().toISOString(),
+                    ruLevel, uw.ruNextReview || null, uw.ruLastReview || null,
+                    uw.updatedAt || new Date().toISOString()
+                ]
+            );
+        }
+        res.json({ success: true });
+    } catch (error) {
+        next(error);
+    }
+});
+
 // SPA catch-all — только для локального dev.
 if (!IS_PROD) {
     app.get('*', (req, res) => {

@@ -6,6 +6,17 @@ import { updateProfileDisplay, renderStats } from '../profile/profileRenderer.js
 import { updateAuthButtons } from '../profile/profile.js';
 import { loadUserAchievements } from '../../services/achievements.js';
 import { loadStreakFromServer } from '../../services/streak.js';
+import { clearLocalSrsState, seedCoreWords, userWords } from '../../data/userWords.js';
+import { syncFlashcardsShim } from '../../data/flashcards.js';
+import { fetchAndMergeWords, flushPending } from '../../services/srsSync.js';
+
+async function reloadSrsForUser() {
+    clearLocalSrsState();
+    await fetchAndMergeWords();
+    if (Object.keys(userWords).length === 0) seedCoreWords();
+    syncFlashcardsShim();
+    flushPending();
+}
 
 /**
  * Инициализация модуля авторизации
@@ -54,10 +65,13 @@ function setupLoginForm() {
             // Обновляем профиль
             updateUserProfile(result.username);
 
-            // Загружаем достижения и стрик с сервера
+            // Загружаем достижения, стрик и SRS-прогресс с сервера.
+            // reloadSrsForUser() очищает локальный SRS-стейт прошлого пользователя
+            // и подтягивает данные нового (или сеет ядро, если новый пользователь).
             await Promise.all([
                 loadUserAchievements(),
-                loadStreakFromServer()
+                loadStreakFromServer(),
+                reloadSrsForUser()
             ]);
 
             // Обновляем UI
@@ -156,10 +170,12 @@ function setupRegisterForm() {
             // Обновляем профиль
             updateUserProfile(result.username);
 
-            // Загружаем достижения и стрик (пустые, но структура должна быть)
+            // Новый пользователь: чистим гостевой SRS-стейт, сеем ядро,
+            // тянем (пустой) ответ с сервера для симметрии.
             await Promise.all([
                 loadUserAchievements(),
-                loadStreakFromServer()
+                loadStreakFromServer(),
+                reloadSrsForUser()
             ]);
 
             // Обновляем UI

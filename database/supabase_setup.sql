@@ -51,6 +51,40 @@ CREATE TABLE IF NOT EXISTS user_achievements (
     PRIMARY KEY (user_id, achievement_id)
 );
 
+-- =====================================================
+-- SRS: per-user прогресс по каждому слову
+-- =====================================================
+CREATE TABLE IF NOT EXISTS user_words (
+    user_id               BIGINT      NOT NULL REFERENCES user_accounts(user_id) ON DELETE CASCADE,
+    word_id               VARCHAR(100) NOT NULL,
+    srs_level             SMALLINT    NOT NULL DEFAULT 1,
+    status                VARCHAR(16) NOT NULL DEFAULT 'new',
+    next_review           DATE,
+    last_review           TIMESTAMPTZ,
+    total_reviews         INTEGER     NOT NULL DEFAULT 0,
+    total_correct         INTEGER     NOT NULL DEFAULT 0,
+    total_incorrect       INTEGER     NOT NULL DEFAULT 0,
+    total_near            INTEGER     NOT NULL DEFAULT 0,
+    enrolled_from_lesson  VARCHAR(100),
+    enrolled_at           TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    ru_level              SMALLINT    NOT NULL DEFAULT 0,
+    ru_next_review        DATE,
+    ru_last_review        TIMESTAMPTZ,
+    updated_at            TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    PRIMARY KEY (user_id, word_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_user_words_due
+    ON user_words(user_id, next_review) WHERE status != 'mastered';
+
+CREATE INDEX IF NOT EXISTS idx_user_words_updated
+    ON user_words(user_id, updated_at DESC);
+
+-- Настройки SRS пользователя
+ALTER TABLE user_accounts
+    ADD COLUMN IF NOT EXISTS daily_goal    SMALLINT NOT NULL DEFAULT 15,
+    ADD COLUMN IF NOT EXISTS fuzzy_stats   JSONB    NOT NULL DEFAULT '{"tolerance":0,"window":[]}'::jsonb;
+
 -- Базовый набор достижений
 INSERT INTO achievements_def (id, title, description, icon, target) VALUES
     ('polyglot',      'Полиглот',     'Пройти тест на определение уровня знания языка', '🎓', 1),

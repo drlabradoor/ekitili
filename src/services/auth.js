@@ -61,6 +61,8 @@ export async function loginUser(username, password) {
 
 import { resetUserProfile } from '../data/user.js';
 import { resetStreakData } from './streak.js';
+import { clearLocalSrsState } from '../data/userWords.js';
+import { syncFlashcardsShim } from '../data/flashcards.js';
 
 /**
  * Выход пользователя — дропаем куку на сервере и локальные данные.
@@ -78,6 +80,8 @@ export async function logoutUser() {
 
     resetUserProfile();
     resetStreakData();
+    clearLocalSrsState();
+    syncFlashcardsShim();
 }
 
 /**

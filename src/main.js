@@ -1,7 +1,9 @@
 // Точка входа приложения
-import { initializeFlashcards } from './data/flashcards.js';
+import { loadUserWords, userWords, seedCoreWords } from './data/userWords.js';
+import { syncFlashcardsShim, initializeFlashcards } from './data/flashcards.js';
+import { loadLessonsCompleted, getRecentLessonIds } from './data/lessons.js';
 import { renderLessonsPath } from './modules/lessons/lessonRenderer.js';
-import { initFlashcards } from './modules/flashcards/flashcards.js';
+import { initFlashcards, setRecentLessonIds } from './modules/flashcards/flashcards.js';
 import { initLeaderboard } from './modules/leaderboard/leaderboard.js';
 import { renderStats, updateProfileDisplay } from './modules/profile/profileRenderer.js';
 import { initProfile, updateAuthButtons } from './modules/profile/profile.js';
@@ -11,6 +13,8 @@ import { isAuthenticated } from './services/auth.js';
 import { checkApiConnection } from './services/apiClient.js';
 import { loadUserProfile } from './data/user.js';
 import { initBattle } from './modules/games/battle.js';
+import { preloadVoices } from './services/audio.js';
+import { fetchAndMergeWords, flushPending } from './services/srsSync.js';
 
 // =====================================================
 // Offline banner + retry
@@ -44,18 +48,25 @@ function setAuthUIDisabled(disabled) {
     });
 }
 
-// Функция инициализации
 async function initializeApp() {
     try {
-        // Проверяем, что сайт открыт через HTTP, а не file://
         if (window.location.protocol === 'file:') {
-            console.error('Сайт открыт через file:// протокол!');
-            console.error('Откройте сайт через сервер: http://localhost:3000');
             alert('Откройте сайт через сервер!\n\nЗапустите: node server.js\nЗатем откройте: http://localhost:3000');
             return;
         }
 
-        // Проверяем подключение к API с retry
+        // Прогреваем Web Speech API заранее
+        preloadVoices();
+
+        // Загружаем SRS-состояние из localStorage
+        loadUserWords();
+        loadLessonsCompleted();
+        syncFlashcardsShim();
+
+        // Подгружаем приоритеты очереди
+        setRecentLessonIds(getRecentLessonIds(3));
+
+        // Проверяем API с retry
         let apiAvailable = await checkApiConnection();
         if (!apiAvailable) {
             showOfflineBanner();
@@ -71,23 +82,23 @@ async function initializeApp() {
                 }
             }
 
-            if (!apiAvailable) {
-                showRetryButton();
-            }
+            if (!apiAvailable) showRetryButton();
         }
 
-        // Загружаем профиль пользователя из localStorage
         loadUserProfile();
 
-        // Проверяем авторизацию
         if (!isAuthenticated()) {
             showLogin();
+        } else {
+            // Загружаем SRS с сервера и флашим очередь. Если сервер вернул пусто
+            // и локально тоже пусто — новый пользователь, сеем ядро.
+            fetchAndMergeWords().then(() => {
+                if (Object.keys(userWords).length === 0) seedCoreWords();
+                syncFlashcardsShim();
+            });
+            flushPending();
         }
 
-        // Инициализация данных
-        initializeFlashcards();
-
-        // Инициализация модулей
         initAuth();
         renderLessonsPath();
         initFlashcards();
@@ -99,19 +110,13 @@ async function initializeApp() {
         updateAuthButtons();
         initRouter();
 
-        // Слушаем события от apiClient
-        document.addEventListener('api-session-expired', () => {
-            showLogin();
-        });
-        document.addEventListener('api-backend-down', () => {
-            showOfflineBanner();
-        });
+        document.addEventListener('api-session-expired', () => showLogin());
+        document.addEventListener('api-backend-down', () => showOfflineBanner());
     } catch (error) {
         console.error('Initialization error:', error);
     }
 }
 
-// Проверяем готовность DOM
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', initializeApp);
 } else {
