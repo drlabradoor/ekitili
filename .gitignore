@@ -7,3 +7,8 @@ config.js
 graphify-out/
 main.js.old
 PAPER_*.md
+
+# Design handoff bundle (kept locally only — see Ekitili-handoff.zip if needed)
+design-handoff/
+Ekitili-handoff.zip
+.playwright-mcp/
