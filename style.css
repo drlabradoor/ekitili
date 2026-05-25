@@ -603,10 +603,9 @@ button { font-family: inherit; cursor: pointer; }
     display: flex;
     flex-direction: column;
     min-height: 100vh;
-    max-width: 560px;
-    margin: 0 auto;
+    width: 100%;
+    margin: 0;
     background: var(--page);
-    box-shadow: 0 0 60px rgba(122,74,28,0.12);
 }
 
 header {
@@ -1592,22 +1591,23 @@ main {
 /* --- Batyr-style bottom navigation --- */
 .bottom-nav {
     position: fixed;
-    left: 50%;
-    transform: translateX(-50%);
+    left: 0;
+    right: 0;
     bottom: 0;
     width: 100%;
-    max-width: 560px;
     background: var(--cream);
     border-top: 3px solid var(--secondary-deep);
     display: flex;
-    justify-content: space-around;
+    justify-content: center;
     align-items: stretch;
-    padding: 8px 4px max(22px, env(safe-area-inset-bottom, 22px)) 4px;
+    gap: clamp(4px, 4vw, 60px);
+    padding: 8px clamp(8px, 4vw, 40px) max(22px, env(safe-area-inset-bottom, 22px));
     z-index: 2000;
 }
 .nav-item {
-    flex: 1;
-    min-width: 44px;
+    flex: 1 0 auto;
+    min-width: 64px;
+    max-width: 140px;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -3348,12 +3348,8 @@ body.lesson-open .app-header { display: none !important; }
     border-radius: 0;
     box-shadow: none;
     padding: 0;
-    /* Bleed across the entire viewport (overrides the 560px app-container) */
-    width: 100vw;
-    margin-left: calc(50% - 50vw);
-    margin-right: calc(50% - 50vw);
-    margin-top: 0;
-    margin-bottom: 0;
+    margin: 0;
+    width: 100%;
     overflow: visible;
 }
 
