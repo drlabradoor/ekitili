@@ -3520,3 +3520,288 @@ body.lesson-open .app-header { display: none !important; }
     width: calc(100% - 32px);
     max-width: 320px;
 }
+
+/* =====================================================
+   Step 3 — Lesson screen (theory → MCQ → new words)
+   Dressed with the .lesson-screen modifier so the legacy
+   .lesson-duo-* rules don't get applied alongside.
+   ===================================================== */
+.lesson-screen {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    width: 100%;
+    background: var(--page);
+    overflow: hidden;
+    transition: background 0.25s;
+}
+.lesson-screen.feedback-ok    { background: #eaefd9; }
+.lesson-screen.feedback-bad   { background: #fdebe6; }
+
+/* Topbar: close · progress · hearts */
+.lesson-topbar {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 14px 18px 10px;
+    background: var(--page);
+}
+.lesson-screen.feedback-ok  .lesson-topbar { background: #eaefd9; }
+.lesson-screen.feedback-bad .lesson-topbar { background: #fdebe6; }
+
+.lesson-close {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    background: transparent;
+    color: var(--ink-soft);
+    font-size: 20px;
+    line-height: 1;
+    border: none;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+.lesson-close:hover { color: var(--secondary-deep); }
+
+.lesson-progress-track {
+    flex: 1;
+    height: 14px;
+    background: var(--cream-3);
+    border: 2px solid var(--secondary-deep);
+    border-radius: 10px;
+    overflow: hidden;
+}
+.lesson-progress-fill {
+    height: 100%;
+    width: 0%;
+    background: var(--secondary);
+    border-right: 2px solid var(--secondary-deep);
+    transition: width 0.3s ease;
+}
+
+.lesson-hearts {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-family: 'Fredoka', 'Manrope', sans-serif;
+    font-weight: 600;
+    color: var(--coral-deep);
+}
+.lesson-hearts-icon { font-size: 18px; }
+
+/* Body */
+.lesson-body {
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 18px 22px 22px;
+    width: 100%;
+    max-width: 640px;
+    margin: 0 auto;
+}
+
+.lesson-prompt {
+    margin-bottom: 18px;
+}
+.lesson-prompt .h-ornament {
+    display: block;
+}
+.lesson-prompt-title.h-display {
+    font-size: 24px;
+    margin-top: 6px;
+    line-height: 1.2;
+    color: var(--secondary-deep);
+}
+
+/* Theory block — sticker card */
+.lesson-theory.sticker {
+    padding: 18px 18px;
+    background: linear-gradient(180deg, #fff6e0 0%, var(--cream) 100%);
+    font-family: 'Manrope', sans-serif;
+    font-size: 15px;
+    line-height: 1.55;
+    color: var(--ink);
+}
+.lesson-theory.sticker b {
+    color: var(--secondary-deep);
+    font-weight: 700;
+}
+
+/* Options grid */
+.lesson-options {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+}
+.lesson-option.task-opt-btn {
+    /* Reset legacy task-opt-btn rules */
+    padding: 14px !important;
+    margin: 0 !important;
+    max-width: none !important;
+    width: auto !important;
+    display: flex !important;
+    align-items: center;
+    gap: 10px;
+    text-align: left;
+    background: var(--cream);
+    border: 2.5px solid var(--cream-3);
+    border-radius: 14px;
+    box-shadow: 0 4px 0 var(--cream-3);
+    cursor: pointer;
+    transition: transform 0.06s, box-shadow 0.06s, border-color 0.18s, background 0.18s;
+    font-family: 'Manrope', sans-serif;
+}
+.lesson-option:hover:not(:disabled):not(.is-correct):not(.is-wrong) {
+    border-color: var(--secondary-deep);
+    box-shadow: 0 4px 0 var(--secondary-deep);
+}
+.lesson-option:active:not(:disabled) {
+    transform: translateY(2px);
+    box-shadow: 0 2px 0 currentColor;
+}
+.lesson-option-letter {
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    border: 2px solid currentColor;
+    color: var(--secondary-deep);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Fredoka', 'Manrope', sans-serif;
+    font-weight: 700;
+    font-size: 13px;
+    flex-shrink: 0;
+}
+.lesson-option-label {
+    font-family: 'Fredoka', 'Manrope', sans-serif;
+    font-weight: 600;
+    font-size: 16px;
+    color: var(--secondary-deep);
+    line-height: 1.2;
+}
+.lesson-option.is-correct {
+    background: #eaefd9;
+    border-color: var(--leaf-deep);
+    box-shadow: 0 4px 0 var(--leaf-deep);
+}
+.lesson-option.is-correct .lesson-option-letter,
+.lesson-option.is-correct .lesson-option-label {
+    color: var(--leaf-deep);
+}
+.lesson-option.is-wrong {
+    background: #fdebe6;
+    border-color: var(--coral-deep);
+    box-shadow: 0 4px 0 var(--coral-deep);
+    opacity: 0.85;
+}
+.lesson-option.is-wrong .lesson-option-letter,
+.lesson-option.is-wrong .lesson-option-label {
+    color: var(--coral-deep);
+}
+.lesson-option:disabled {
+    cursor: default;
+}
+
+/* Words list (step 3) */
+.lesson-words.sticker {
+    padding: 4px 6px;
+    background: var(--cream);
+}
+.lesson-word {
+    padding: 12px 14px;
+    border-bottom: 1px dashed rgba(122,74,28,0.25);
+    display: flex;
+    align-items: baseline;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+.lesson-word:last-child { border-bottom: none; }
+.lesson-word-kz {
+    font-family: 'Fredoka', 'Manrope', sans-serif;
+    font-weight: 700;
+    font-size: 18px;
+    color: var(--secondary-deep);
+}
+.lesson-word-ru {
+    font-family: 'Manrope', sans-serif;
+    font-weight: 500;
+    font-size: 15px;
+    color: var(--ink);
+}
+.lesson-word-phonetic {
+    font-family: 'Fredoka', 'Manrope', sans-serif;
+    font-style: italic;
+    font-size: 13px;
+    color: var(--ink-soft);
+}
+.lesson-words-placeholder {
+    padding: 18px;
+    text-align: center;
+    color: var(--ink-soft);
+    font-style: italic;
+}
+
+/* Bottom action button — fills the bottom dock */
+.lesson-bottom {
+    flex-shrink: 0;
+    padding: 14px 18px 18px;
+    background: var(--page);
+    border-top: 2px solid var(--cream-3);
+    transition: background 0.25s, border-color 0.25s;
+}
+.lesson-screen.feedback-ok  .lesson-bottom { background: #eaefd9; border-top-color: rgba(74,102,40,0.18); }
+.lesson-screen.feedback-bad .lesson-bottom { background: #fdebe6; border-top-color: rgba(154,63,46,0.18); }
+
+.lesson-action-btn.btn-chunk {
+    /* Override legacy .lesson-duo-next-btn rules that this class no longer inherits */
+    position: static !important;
+    margin: 0 auto !important;
+    width: 100% !important;
+    max-width: 420px !important;
+    padding: 14px 22px !important;
+    background: var(--secondary) !important;
+    color: var(--cream) !important;
+    border: 2px solid var(--secondary-deep) !important;
+    border-radius: var(--r-md) !important;
+    box-shadow: 0 4px 0 var(--secondary-deep) !important;
+    font-size: 16px !important;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+    z-index: auto !important;
+    display: block;
+}
+.lesson-action-btn.btn-chunk:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+    background: var(--cream-3) !important;
+    color: var(--ink-soft) !important;
+    border-color: var(--cream-3) !important;
+    box-shadow: 0 4px 0 rgba(122,74,28,0.2) !important;
+}
+.lesson-action-btn.btn-chunk.leaf {
+    background: var(--leaf) !important;
+    border-color: var(--leaf-deep) !important;
+    box-shadow: 0 4px 0 var(--leaf-deep) !important;
+}
+.lesson-action-btn.btn-chunk.coral {
+    background: var(--coral) !important;
+    border-color: var(--coral-deep) !important;
+    box-shadow: 0 4px 0 var(--coral-deep) !important;
+}
+.lesson-action-btn.btn-chunk.teal {
+    background: var(--teal) !important;
+    border-color: var(--teal-deep) !important;
+    box-shadow: 0 4px 0 var(--teal-deep) !important;
+}
+
+/* Mobile tweaks */
+@media (max-width: 520px) {
+    .lesson-options { grid-template-columns: 1fr; }
+    .lesson-prompt-title.h-display { font-size: 20px; }
+    .lesson-body { padding: 14px 16px 18px; }
+    .lesson-topbar { padding: 12px 14px 8px; gap: 10px; }
+}
