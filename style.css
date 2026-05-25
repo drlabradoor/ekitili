@@ -5078,4 +5078,241 @@ body.lesson-open .app-header { display: none !important; }
     padding: 14px 18px 4px;
 }
 
+/* =====================================================
+   Step 6 — Leaderboard (Рейтинг)
+   Дизайн-референс: design-handoff/project/screens_board.jsx
+   Top-3 идут на подиум, остальные — chunky-список ниже.
+   ===================================================== */
+#tab-leaderboard .stat-leaderboard {
+    background: var(--page);
+    border-radius: 0;
+    box-shadow: none;
+    margin: 0;
+    padding: 0 0 14px;
+}
+#tab-leaderboard .leaderboard-label {
+    display: block;
+    background: var(--secondary);
+    color: var(--cream);
+    border-bottom: 3px solid var(--secondary-deep);
+    box-shadow: 0 4px 0 rgba(122,74,28,0.18);
+    font-family: 'Fredoka', 'Manrope', sans-serif;
+    font-weight: 600;
+    font-size: 22px;
+    letter-spacing: 0.02em;
+    text-align: center;
+    padding: 14px 22px;
+    margin: 0 0 18px;
+    -webkit-text-fill-color: currentColor;
+    -webkit-background-clip: border-box;
+    background-clip: border-box;
+}
+#tab-leaderboard .leaderboard-label::before { content: '🏆 '; }
+
+#tab-leaderboard .leaderboard-block {
+    margin: 0 14px 18px;
+    padding: 0;
+    background: transparent;
+    border-radius: 0;
+    box-shadow: none;
+}
+#tab-leaderboard .leaderboard-title {
+    font-family: 'Fredoka', 'Manrope', sans-serif;
+    font-weight: 500;
+    font-size: 11px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--secondary-deep);
+    opacity: 0.75;
+    text-align: center;
+    margin: 0 0 10px;
+}
+
+#tab-leaderboard .leaderboard-list--podium {
+    background: transparent;
+    padding: 0;
+}
+
+/* ---- Podium (top 3) ---- */
+.leaderboard-podium {
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    gap: 10px;
+    padding: 20px 14px 4px;
+}
+.podium-place {
+    flex: 1;
+    max-width: 120px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+}
+.podium-crown { font-size: 24px; margin-bottom: -4px; }
+.podium-avatar-wrap {
+    position: relative;
+}
+.podium-avatar {
+    width: 54px;
+    height: 54px;
+    border-radius: 50%;
+    background: var(--cream-2);
+    border: 3px solid var(--secondary-deep);
+    box-shadow: 0 3px 0 var(--secondary-deep);
+    color: var(--secondary-deep);
+    font-family: 'Fredoka', 'Manrope', sans-serif;
+    font-weight: 700;
+    font-size: 22px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.podium-place--1 .podium-avatar { width: 68px; height: 68px; font-size: 28px; }
+.podium-medal {
+    position: absolute;
+    bottom: -6px;
+    right: -6px;
+    font-size: 22px;
+}
+.podium-name {
+    font-family: 'Fredoka', 'Manrope', sans-serif;
+    font-weight: 600;
+    font-size: 13px;
+    color: var(--ink);
+    margin-top: 8px;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.podium-points {
+    font-family: 'Fredoka', 'Manrope', sans-serif;
+    font-weight: 600;
+    font-size: 12px;
+    color: var(--secondary-deep);
+}
+.podium-bar {
+    width: 100%;
+    background: var(--secondary);
+    border: 2.5px solid var(--secondary-deep);
+    border-bottom: none;
+    border-radius: 10px 10px 0 0;
+    color: var(--cream);
+    font-family: 'Fredoka', 'Manrope', sans-serif;
+    font-weight: 600;
+    font-size: 22px;
+    text-shadow: 0 2px 0 var(--secondary-deep);
+    margin-top: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.podium-place--1 .podium-bar { height: 110px; }
+.podium-place--2 .podium-bar { height: 84px; }
+.podium-place--3 .podium-bar { height: 64px; }
+
+/* ---- Rest list (places 4+) ---- */
+.leaderboard-rest {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 14px 14px 0;
+}
+#tab-leaderboard .leaderboard-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 12px;
+    background: var(--cream);
+    color: var(--ink);
+    border: 2.5px solid var(--cream-3);
+    border-radius: 14px;
+}
+#tab-leaderboard .leaderboard-place {
+    width: 36px;
+    text-align: center;
+    font-family: 'Fredoka', 'Manrope', sans-serif;
+    font-weight: 600;
+    font-size: 17px;
+    color: var(--secondary-deep);
+    flex-shrink: 0;
+}
+#tab-leaderboard .leaderboard-avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: var(--secondary);
+    color: var(--cream);
+    font-family: 'Fredoka', 'Manrope', sans-serif;
+    font-weight: 700;
+    font-size: 15px;
+    border: 2px solid var(--secondary-deep);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+#tab-leaderboard .leaderboard-name {
+    flex: 1;
+    font-family: 'Fredoka', 'Manrope', sans-serif;
+    font-weight: 600;
+    font-size: 14px;
+    color: var(--ink);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+#tab-leaderboard .leaderboard-points {
+    font-family: 'Fredoka', 'Manrope', sans-serif;
+    font-weight: 700;
+    font-size: 15px;
+    color: var(--secondary-deep);
+    flex-shrink: 0;
+}
+
+#tab-leaderboard .leaderboard-empty {
+    text-align: center;
+    padding: 30px 16px;
+    color: var(--ink-soft);
+    font-style: italic;
+    font-size: 14px;
+}
+
+/* ---- "You" card pinned at the bottom of the tab ---- */
+#tab-leaderboard .leaderboard-user {
+    margin: 12px 14px 4px;
+    padding: 12px 14px;
+    background: var(--secondary);
+    color: var(--cream);
+    border: 2.5px solid var(--secondary-deep);
+    border-radius: 14px;
+    box-shadow: 0 4px 0 var(--secondary-deep);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+#tab-leaderboard .leaderboard-user-label {
+    flex: 1;
+    font-family: 'Fredoka', 'Manrope', sans-serif;
+    font-weight: 600;
+    font-size: 13px;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+#tab-leaderboard .leaderboard-user-place {
+    font-family: 'Fredoka', 'Manrope', sans-serif;
+    font-weight: 700;
+    font-size: 20px;
+    color: var(--gold-soft);
+    min-width: 40px;
+    text-align: center;
+}
+#tab-leaderboard .leaderboard-user-points {
+    font-family: 'Fredoka', 'Manrope', sans-serif;
+    font-weight: 700;
+    font-size: 18px;
+    color: var(--cream);
+}
+
 
