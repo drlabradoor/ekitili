@@ -124,6 +124,7 @@ function showTrainingCard(container) {
     container.innerHTML = `
         <div class="training-arena">
             <div class="training-header">
+                <button type="button" class="training-exit-btn" id="training-exit-btn" aria-label="Выйти из тренировки">✕</button>
                 <div class="training-hp-wrap">
                     <span class="training-hp-label">HP: ${s.hp}</span>
                     <div class="training-hp-bar-bg">
@@ -175,6 +176,12 @@ function showTrainingCard(container) {
         clearTimers();
         handleAnswer(container, null);
     }, timerSeconds * 1000);
+
+    // Кнопка выхода в меню Боя
+    container.querySelector('#training-exit-btn')?.addEventListener('click', () => {
+        clearTimers();
+        import('./battle.js').then(m => m.renderBattleTab());
+    });
 
     // Привязка кнопок
     container.querySelectorAll('.defend-option-btn').forEach(btn => {

@@ -4427,6 +4427,7 @@ body.lesson-open .app-header { display: none !important; }
     box-shadow: none;
 }
 #tab-games .games-menu .battle-title {
+    display: block;
     font-family: 'Fredoka', 'Manrope', sans-serif;
     font-weight: 600;
     font-size: 24px;
@@ -4438,6 +4439,10 @@ body.lesson-open .app-header { display: none !important; }
     text-align: center;
     letter-spacing: 0.02em;
     box-shadow: 0 4px 0 rgba(29,74,86,0.18);
+    /* Reset legacy gradient-clipped text trick from .battle-title */
+    -webkit-background-clip: border-box;
+    background-clip: border-box;
+    -webkit-text-fill-color: currentColor;
 }
 #tab-games .games-menu .battle-title::before { content: '⚔ '; }
 #tab-games .games-menu .battle-title::after  { content: ' ⚔'; }
@@ -4517,6 +4522,7 @@ body.lesson-open .app-header { display: none !important; }
     box-shadow: none;
 }
 #tab-games .battle-lobby .battle-title {
+    display: block;
     font-family: 'Fredoka', 'Manrope', sans-serif;
     font-weight: 600;
     font-size: 24px;
@@ -4527,6 +4533,9 @@ body.lesson-open .app-header { display: none !important; }
     border-bottom: 3px solid var(--teal-deep);
     text-align: center;
     box-shadow: 0 4px 0 rgba(29,74,86,0.18);
+    -webkit-background-clip: border-box;
+    background-clip: border-box;
+    -webkit-text-fill-color: currentColor;
 }
 #tab-games .battle-lobby .battle-title::before { content: '⚔ '; }
 #tab-games .battle-lobby .battle-title::after  { content: ' ⚔'; }
@@ -4989,5 +4998,88 @@ body.lesson-open .app-header { display: none !important; }
     border-radius: 8px;
 }
 .games-rules-modal-close:hover { color: var(--secondary-deep); }
+
+/* Training arena — close button + chunky header */
+#tab-games .training-arena {
+    padding: 0 0 30px;
+    background: linear-gradient(180deg, #f6eecf 0%, #efe2bf 100%);
+    min-height: 70vh;
+}
+#tab-games .training-header {
+    position: relative;
+    background: var(--coral);
+    border-bottom: 3px solid var(--coral-deep);
+    padding: 14px 56px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    color: var(--cream);
+    box-shadow: 0 4px 0 rgba(154,63,46,0.2);
+}
+#tab-games .training-exit-btn {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    background: rgba(0,0,0,0.18);
+    color: var(--cream);
+    border: 2px solid var(--coral-deep);
+    font-size: 18px;
+    line-height: 1;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+#tab-games .training-exit-btn:hover { background: rgba(0,0,0,0.32); }
+#tab-games .training-hp-wrap {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+#tab-games .training-hp-label {
+    font-family: 'Fredoka', 'Manrope', sans-serif;
+    font-weight: 700;
+    font-size: 13px;
+    color: var(--cream);
+}
+#tab-games .training-hp-bar-bg {
+    height: 10px;
+    background: rgba(0,0,0,0.25);
+    border: 1.5px solid var(--coral-deep);
+    border-radius: 6px;
+    overflow: hidden;
+}
+#tab-games .training-hp-bar {
+    height: 100%;
+    transition: width 0.3s;
+}
+#tab-games .training-turn-label {
+    flex-shrink: 0;
+    padding: 4px 10px;
+    background: rgba(0,0,0,0.18);
+    border: 1px solid var(--coral-deep);
+    border-radius: 999px;
+    font-family: 'Fredoka', 'Manrope', sans-serif;
+    font-weight: 700;
+    font-size: 12px;
+    color: var(--cream);
+}
+#tab-games .training-timer-info {
+    text-align: center;
+    font-family: 'Fredoka', 'Manrope', sans-serif;
+    font-weight: 600;
+    color: var(--secondary-deep);
+    font-size: 13px;
+    margin: 8px 0 4px;
+}
+#tab-games .training-arena .defend-phase {
+    padding: 14px 18px 4px;
+}
 
 
