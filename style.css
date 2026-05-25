@@ -4407,3 +4407,587 @@ body.lesson-open .app-header { display: none !important; }
     .cards-scroll-body .srs-lib-search { font-size: 13px; padding-left: 28px; }
 }
 
+/* =====================================================
+   Step 5 — Battle (Бой) — lobby / arena / result
+   Дизайн-референс: design-handoff/project/screens_duel.jsx
+   Overrides the legacy .battle-* / .arena-* / .games-menu-*
+   rules without changing the underlying gameplay JS.
+   ===================================================== */
+#tab-games .battle-container {
+    padding: 0;
+    background: var(--page);
+    width: 100%;
+    max-width: none;
+}
+
+/* ---- Games menu (selecting Тренировка / Дуэль) ---- */
+#tab-games .games-menu {
+    padding: 16px 18px 20px;
+    background: transparent;
+    box-shadow: none;
+}
+#tab-games .games-menu .battle-title {
+    font-family: 'Fredoka', 'Manrope', sans-serif;
+    font-weight: 600;
+    font-size: 24px;
+    color: var(--cream);
+    margin: 0 -18px 14px;
+    padding: 14px 22px;
+    background: var(--teal);
+    border-bottom: 3px solid var(--teal-deep);
+    text-align: center;
+    letter-spacing: 0.02em;
+    box-shadow: 0 4px 0 rgba(29,74,86,0.18);
+}
+#tab-games .games-menu .battle-title::before { content: '⚔ '; }
+#tab-games .games-menu .battle-title::after  { content: ' ⚔'; }
+
+#tab-games .games-menu-rows {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin: 6px 0 0;
+    padding: 0;
+}
+#tab-games .games-menu-row {
+    background: var(--cream);
+    border: 2.5px solid var(--secondary-deep);
+    border-radius: 16px;
+    box-shadow: 0 5px 0 var(--secondary-deep);
+    padding: 14px 14px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+#tab-games .games-menu-icon-btn {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    background: var(--secondary);
+    color: var(--cream);
+    border: 2px solid var(--secondary-deep);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+    flex-shrink: 0;
+}
+#tab-games .games-menu-row:nth-child(2) .games-menu-icon-btn {
+    background: var(--coral);
+    border-color: var(--coral-deep);
+}
+#tab-games .games-menu-main-btn {
+    flex: 1;
+    padding: 12px 14px;
+    background: var(--secondary);
+    color: var(--cream);
+    border: 2px solid var(--secondary-deep);
+    border-radius: 12px;
+    box-shadow: 0 3px 0 var(--secondary-deep);
+    font-family: 'Fredoka', 'Manrope', sans-serif;
+    font-weight: 700;
+    font-size: 16px;
+    letter-spacing: 0.04em;
+    cursor: pointer;
+}
+#tab-games .games-menu-main-btn--training {
+    background: var(--coral);
+    border-color: var(--coral-deep);
+    box-shadow: 0 3px 0 var(--coral-deep);
+}
+#tab-games .games-menu-rules-btn {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: var(--cream-2);
+    border: 2px solid var(--secondary-deep);
+    color: var(--secondary-deep);
+    cursor: pointer;
+    font-size: 14px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+/* ---- Lobby ---- */
+#tab-games .battle-lobby {
+    padding: 0 0 30px;
+    background: transparent;
+    box-shadow: none;
+}
+#tab-games .battle-lobby .battle-title {
+    font-family: 'Fredoka', 'Manrope', sans-serif;
+    font-weight: 600;
+    font-size: 24px;
+    color: var(--cream);
+    margin: 0 0 6px;
+    padding: 16px 22px;
+    background: var(--teal);
+    border-bottom: 3px solid var(--teal-deep);
+    text-align: center;
+    box-shadow: 0 4px 0 rgba(29,74,86,0.18);
+}
+#tab-games .battle-lobby .battle-title::before { content: '⚔ '; }
+#tab-games .battle-lobby .battle-title::after  { content: ' ⚔'; }
+#tab-games .battle-subtitle {
+    text-align: center;
+    color: var(--ink-soft);
+    font-family: 'Fredoka', 'Manrope', sans-serif;
+    font-weight: 500;
+    font-size: 13px;
+    padding: 6px 22px 14px;
+}
+#tab-games .lobby-avatar-preview {
+    display: flex;
+    justify-content: center;
+    padding: 12px 0 18px;
+}
+#tab-games .battle-find-btn,
+#tab-games .battle-cancel-btn {
+    display: block;
+    margin: 14px auto 18px;
+    padding: 14px 26px;
+    background: var(--secondary);
+    color: var(--cream);
+    border: 2px solid var(--secondary-deep);
+    border-radius: var(--r-md);
+    box-shadow: 0 4px 0 var(--secondary-deep);
+    font-family: 'Fredoka', 'Manrope', sans-serif;
+    font-weight: 600;
+    font-size: 16px;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    cursor: pointer;
+    min-width: 220px;
+    text-align: center;
+}
+#tab-games .battle-cancel-btn {
+    background: var(--cream);
+    color: var(--secondary-deep);
+    box-shadow: 0 4px 0 rgba(122,74,28,0.35);
+}
+#tab-games .battle-rules {
+    margin: 12px 18px 0;
+    padding: 14px 16px;
+    background: var(--cream);
+    border: 2.5px solid var(--secondary-deep);
+    border-radius: 16px;
+    box-shadow: 0 4px 0 var(--secondary-deep);
+}
+#tab-games .battle-rules .rules-title {
+    font-family: 'Fredoka', 'Manrope', sans-serif;
+    font-weight: 700;
+    font-size: 14px;
+    color: var(--secondary-deep);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-bottom: 8px;
+}
+#tab-games .battle-rules ul {
+    padding-left: 18px;
+    margin: 0;
+    color: var(--ink);
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+/* ---- Searching ---- */
+#tab-games .battle-searching {
+    padding: 24px 22px 30px;
+    text-align: center;
+    background: transparent;
+    box-shadow: none;
+}
+#tab-games .battle-searching .battle-title {
+    background: none;
+    color: var(--secondary-deep);
+    box-shadow: none;
+    border: none;
+    padding: 0;
+    margin: 0 0 18px;
+    font-size: 20px;
+}
+#tab-games .searching-spinner {
+    width: 64px;
+    height: 64px;
+    border: 5px solid var(--cream-3);
+    border-top-color: var(--secondary);
+    border-radius: 50%;
+    margin: 8px auto 18px;
+    animation: spin 0.9s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ---- Arena ---- */
+#tab-games .battle-arena {
+    padding: 0 0 40px;
+    background: linear-gradient(180deg, #f6eecf 0%, #efe2bf 100%);
+    min-height: 70vh;
+}
+#tab-games .arena-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-around;
+    padding: 16px 18px 12px;
+    background: var(--secondary);
+    border-bottom: 3px solid var(--secondary-deep);
+}
+#tab-games .arena-vs {
+    font-family: 'Fredoka', 'Manrope', sans-serif;
+    font-weight: 700;
+    font-size: 22px;
+    color: var(--cream);
+    text-shadow: 0 2px 0 var(--secondary-deep);
+}
+#tab-games .arena-batyr { flex: 1; max-width: 140px; text-align: center; }
+#tab-games .batyr-name {
+    font-family: 'Fredoka', 'Manrope', sans-serif;
+    font-weight: 600;
+    font-size: 13px;
+    color: var(--cream);
+    margin-top: 4px;
+}
+#tab-games .batyr-hp-bar {
+    background: rgba(0,0,0,0.25);
+    border: 1.5px solid var(--secondary-deep);
+    border-radius: 6px;
+    overflow: hidden;
+    height: 8px;
+    margin: 4px auto 2px;
+    width: 100px;
+}
+#tab-games .batyr-hp-fill {
+    background: linear-gradient(90deg, var(--leaf), #a8c870);
+    height: 100%;
+    transition: width 0.3s;
+}
+#tab-games .batyr-hp-text {
+    font-family: 'Fredoka', 'Manrope', sans-serif;
+    font-size: 11px;
+    color: var(--cream);
+    opacity: 0.9;
+}
+
+#tab-games .arena-center {
+    padding: 16px 18px;
+    background: transparent;
+}
+#tab-games .arena-turn-info {
+    text-align: center;
+    font-family: 'Fredoka', 'Manrope', sans-serif;
+    font-weight: 600;
+    font-size: 14px;
+    color: var(--secondary-deep);
+    margin-bottom: 12px;
+    padding: 8px 12px;
+    background: var(--cream);
+    border: 2px solid var(--secondary-deep);
+    border-radius: 999px;
+    box-shadow: 0 2px 0 rgba(122,74,28,0.25);
+    transition: background 0.18s, color 0.18s;
+}
+#tab-games .arena-turn-info.turn-info--correct {
+    background: var(--leaf);
+    color: var(--cream);
+    border-color: var(--leaf-deep);
+}
+#tab-games .arena-turn-info.turn-info--wrong {
+    background: var(--coral);
+    color: var(--cream);
+    border-color: var(--coral-deep);
+}
+
+/* Attack: three cards in hand */
+#tab-games .attack-cards {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+}
+#tab-games .attack-card {
+    background: var(--cream);
+    border: 2.5px solid var(--secondary-deep);
+    border-radius: 14px;
+    box-shadow: 0 4px 0 var(--secondary-deep);
+    width: 96px;
+    padding: 10px 8px;
+    text-align: center;
+    cursor: pointer;
+    transition: transform 0.06s, box-shadow 0.06s;
+    animation: card-arrive 0.4s ease-out;
+}
+#tab-games .attack-card:hover { transform: translateY(-2px); box-shadow: 0 6px 0 var(--secondary-deep); }
+#tab-games .attack-card:active {
+    transform: translateY(3px);
+    box-shadow: 0 1px 0 var(--secondary-deep);
+}
+#tab-games .attack-card-svg {
+    width: 60px;
+    height: 60px;
+    margin: 0 auto 6px;
+}
+#tab-games .attack-card-word {
+    font-family: 'Fredoka', 'Manrope', sans-serif;
+    font-weight: 700;
+    font-size: 14px;
+    color: var(--secondary-deep);
+}
+
+/* Defend: incoming card + 4 option buttons */
+#tab-games .defend-phase {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+}
+#tab-games .defend-incoming-card {
+    background: var(--cream);
+    border: 2.5px solid var(--coral-deep);
+    border-radius: 14px;
+    box-shadow: 0 4px 0 var(--coral-deep);
+    padding: 12px;
+    width: 130px;
+    text-align: center;
+}
+#tab-games .defend-card-svg {
+    width: 70px;
+    height: 70px;
+    margin: 0 auto 4px;
+}
+#tab-games .defend-card-label {
+    font-family: 'Fredoka', 'Manrope', sans-serif;
+    font-weight: 700;
+    color: var(--coral-deep);
+    font-size: 15px;
+}
+#tab-games .defend-timer {
+    width: 100%;
+    max-width: 320px;
+    height: 8px;
+    background: var(--cream-3);
+    border: 1.5px solid var(--secondary-deep);
+    border-radius: 999px;
+    overflow: hidden;
+}
+#tab-games .defend-timer-bar {
+    height: 100%;
+    background: linear-gradient(90deg, var(--leaf), var(--secondary), var(--coral));
+}
+#tab-games .defend-options {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    width: 100%;
+    max-width: 340px;
+}
+#tab-games .defend-option-btn {
+    padding: 12px 12px;
+    background: var(--cream);
+    color: var(--secondary-deep);
+    border: 2.5px solid var(--secondary-deep);
+    border-radius: 12px;
+    box-shadow: 0 3px 0 var(--secondary-deep);
+    font-family: 'Fredoka', 'Manrope', sans-serif;
+    font-weight: 600;
+    font-size: 14px;
+    cursor: pointer;
+    transition: transform 0.06s;
+}
+#tab-games .defend-option-btn:hover:not(:disabled) {
+    background: #fff6e0;
+}
+#tab-games .defend-option-btn:active:not(:disabled) {
+    transform: translateY(2px);
+    box-shadow: 0 1px 0 var(--secondary-deep);
+}
+#tab-games .defend-option-btn.defend-option--selected {
+    background: var(--secondary);
+    color: var(--cream);
+}
+#tab-games .defend-option-btn:disabled { opacity: 0.6; cursor: default; }
+
+/* Waiting / spinner */
+#tab-games .waiting-phase {
+    display: flex;
+    justify-content: center;
+    padding: 22px 0;
+}
+#tab-games .waiting-spinner {
+    width: 44px;
+    height: 44px;
+    border: 4px solid var(--cream-3);
+    border-top-color: var(--secondary);
+    border-radius: 50%;
+    animation: spin 0.9s linear infinite;
+}
+
+/* Combo bar */
+#tab-games .arena-combo-bar {
+    text-align: center;
+    padding: 4px 18px;
+    min-height: 24px;
+}
+#tab-games .combo-active {
+    display: inline-block;
+    padding: 4px 12px;
+    background: var(--coral);
+    color: var(--cream);
+    border: 2px solid var(--coral-deep);
+    border-radius: 999px;
+    font-family: 'Fredoka', 'Manrope', sans-serif;
+    font-weight: 700;
+    font-size: 12px;
+    box-shadow: 0 2px 0 var(--coral-deep);
+    animation: pulse-ring 1.2s ease-out infinite;
+}
+#tab-games .combo-building {
+    display: inline-block;
+    padding: 3px 10px;
+    background: var(--cream);
+    color: var(--secondary-deep);
+    border: 1.5px solid var(--secondary-deep);
+    border-radius: 999px;
+    font-family: 'Fredoka', 'Manrope', sans-serif;
+    font-weight: 600;
+    font-size: 11px;
+}
+
+/* Specials panel */
+#tab-games .arena-specials {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    padding: 8px 18px 16px;
+}
+#tab-games .special-btn {
+    width: 56px;
+    height: 56px;
+    background: var(--cream);
+    border: 2.5px solid var(--secondary-deep);
+    border-radius: 14px;
+    box-shadow: 0 3px 0 var(--secondary-deep);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: var(--secondary-deep);
+}
+#tab-games .special-btn:active:not(:disabled) {
+    transform: translateY(2px);
+    box-shadow: 0 1px 0 var(--secondary-deep);
+}
+#tab-games .special-btn--used {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+#tab-games .special-btn-icon { font-size: 22px; }
+#tab-games .special-btn-icon svg { width: 24px; height: 24px; }
+#tab-games .special-btn-label {
+    font-family: 'Fredoka', 'Manrope', sans-serif;
+    font-size: 9px;
+    margin-top: 2px;
+    letter-spacing: 0.04em;
+}
+
+/* ---- Result screen ---- */
+#tab-games .battle-result {
+    padding: 22px 22px 30px;
+    text-align: center;
+    background: transparent;
+    box-shadow: none;
+}
+#tab-games .result-title {
+    font-family: 'Fredoka', 'Manrope', sans-serif;
+    font-weight: 700;
+    font-size: 28px;
+    color: var(--secondary-deep);
+    margin: 0 0 6px;
+}
+#tab-games .battle-result--win .result-title { color: var(--leaf-deep); }
+#tab-games .battle-result--lose .result-title { color: var(--coral-deep); }
+#tab-games .result-icon { font-size: 56px; margin-bottom: 18px; }
+#tab-games .result-stats {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin: 0 auto 18px;
+    max-width: 320px;
+}
+#tab-games .result-stat {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 14px;
+    background: var(--cream);
+    border: 2px solid var(--cream-3);
+    border-radius: 12px;
+}
+#tab-games .result-stat-label {
+    font-family: 'Fredoka', 'Manrope', sans-serif;
+    font-weight: 500;
+    font-size: 12px;
+    color: var(--ink-soft);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+#tab-games .result-stat-value {
+    font-family: 'Fredoka', 'Manrope', sans-serif;
+    font-weight: 700;
+    font-size: 18px;
+    color: var(--secondary-deep);
+}
+
+/* ---- Rules modal ---- */
+.games-rules-modal {
+    position: fixed;
+    inset: 0;
+    background: rgba(61,40,23,0.45);
+    z-index: 3000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+}
+.games-rules-modal-inner {
+    position: relative;
+    background: var(--cream);
+    border: 3px solid var(--secondary-deep);
+    border-radius: 18px;
+    box-shadow: 0 6px 0 var(--secondary-deep);
+    padding: 20px 22px 22px;
+    max-width: 440px;
+    width: 100%;
+    max-height: 80vh;
+    overflow-y: auto;
+}
+.games-rules-modal-inner h3 {
+    font-family: 'Fredoka', 'Manrope', sans-serif;
+    font-weight: 700;
+    color: var(--secondary-deep);
+    margin: 0 0 12px;
+    font-size: 20px;
+}
+.games-rules-modal-inner ul {
+    margin: 0;
+    padding-left: 18px;
+    color: var(--ink);
+    line-height: 1.55;
+    font-size: 14px;
+}
+.games-rules-modal-close {
+    position: absolute;
+    top: 8px;
+    right: 12px;
+    background: none;
+    border: none;
+    font-size: 26px;
+    color: var(--ink-soft);
+    cursor: pointer;
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+}
+.games-rules-modal-close:hover { color: var(--secondary-deep); }
+
+
