@@ -108,9 +108,13 @@ export function renderLessonsPath() {
     if (currentIdx === -1) currentIdx = lessonsProgress.findIndex(p => p === false);
 
     const positions = lessonsData.map((_, i) => nodePos(i));
-    const totalH = positions.length
+    const naturalH = positions.length
         ? positions[positions.length - 1].y + PAD_BOTTOM
         : 200;
+    // Always fill at least the viewport so hills + scatter cover the screen
+    // even when there are very few lessons.
+    const minScreenH = Math.max(900, (window.innerHeight || 800) - 60);
+    const totalH = Math.max(naturalH, minScreenH);
 
     // Full-width steppe canvas; nodes live in a centered 360-wide inner layer.
     const canvas = document.createElement('div');

@@ -2114,7 +2114,7 @@ body, .main-tabs, .tab-section {
   box-shadow: 0 4px 0 rgba(122,74,28,0.18);
   user-select: none;
   padding: 18px 16px 16px;
-  margin-bottom: 12px;
+  margin-bottom: 0;
   margin-top: 0;
   width: 100%;
 }
@@ -3347,18 +3347,25 @@ body.lesson-open .app-header { display: none !important; }
     background: var(--page);
     border-radius: 0;
     box-shadow: none;
-    margin: 0;
     padding: 0;
-    width: 100%;
+    /* Bleed across the entire viewport (overrides the 560px app-container) */
+    width: 100vw;
+    margin-left: calc(50% - 50vw);
+    margin-right: calc(50% - 50vw);
+    margin-top: 0;
+    margin-bottom: 0;
     overflow: visible;
 }
 
 /* Full-bleed steppe canvas. The background layer stretches the
    entire .lessons-path width; an inner 360-wide layer pins the
-   winding dashed path, lesson nodes and the mascot. */
+   winding dashed path, lesson nodes and the mascot.
+   min-height makes sure the steppe fills the viewport even with
+   few lessons; with more lessons the JS bumps the explicit height. */
 .path-canvas {
     position: relative;
     width: 100%;
+    min-height: 100vh;
     background: linear-gradient(180deg, #f6eecf 0%, #efe2bf 40%, #e8d4a3 100%);
     overflow: hidden;
 }
