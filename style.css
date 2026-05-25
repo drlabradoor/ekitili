@@ -4003,8 +4003,8 @@ body.lesson-open .app-header { display: none !important; }
 .cards-scroll-body .srs-progress {
     display: flex;
     align-items: center;
-    gap: 10px;
-    padding: 4px 4px 14px;
+    gap: 12px;
+    padding: 6px 8px 22px;
     margin-bottom: 0;
 }
 .cards-scroll-body .srs-progress-count,
@@ -4013,7 +4013,16 @@ body.lesson-open .app-header { display: none !important; }
     font-weight: 600;
     font-size: 12px;
     color: var(--secondary-deep);
+    flex-shrink: 0;
+    min-width: 32px;
+    text-align: center;
 }
+.cards-scroll-body .srs-progress-count { text-align: left; }
+.cards-scroll-body .srs-progress-goal { text-align: right; }
+/* On the parchment the goal duplicates info shown on the profile; hide
+   it while the daily-goal UI hasn't been redesigned, freeing the
+   right-corner area for the → RU / → KZ direction chip on .srs-card. */
+.cards-scroll-body .srs-progress-goal { display: none; }
 .cards-scroll-body .srs-progress-bar {
     flex: 1;
     height: 6px;
@@ -4028,10 +4037,11 @@ body.lesson-open .app-header { display: none !important; }
 }
 
 .cards-scroll-body .srs-card {
+    position: relative;
     background: transparent;
     border: none;
     box-shadow: none;
-    padding: 8px 4px 0;
+    padding: 22px 4px 0;
 }
 .cards-scroll-body .srs-card.is-exact,
 .cards-scroll-body .srs-card.is-near,
@@ -4040,8 +4050,8 @@ body.lesson-open .app-header { display: none !important; }
 }
 .cards-scroll-body .srs-card-dir-label {
     position: absolute;
-    top: 12px;
-    right: 14px;
+    top: 0;
+    right: 6px;
     padding: 3px 9px;
     border-radius: 999px;
     background: rgba(122,74,28,0.08);
@@ -4051,6 +4061,7 @@ body.lesson-open .app-header { display: none !important; }
     font-size: 10px;
     color: var(--secondary-deep);
     letter-spacing: 0.06em;
+    z-index: 2;
 }
 .cards-scroll-body .srs-card-word {
     text-align: center;
