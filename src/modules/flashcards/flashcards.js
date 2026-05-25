@@ -26,16 +26,41 @@ export function renderFlashcardsTab() {
 }
 
 function renderFlashcardsSection(section) {
+    // Дизайн-референс: design-handoff/project/screens_cards.jsx
+    // Свиток (Scroll) с пергаментным телом и деревянными валиками сверху/снизу.
+    section.classList.add('cards-screen');
     section.innerHTML = `
-        <div class="srs-mode-tabs">
-            <button class="flashcard-mode-btn ${currentMode === 'repeat' ? 'active' : ''}" id="tab-repeat">
-                <i class="fas fa-rotate-right"></i> Повторение
+        <div class="cards-heading">
+            <div class="h-ornament">Колода повторения</div>
+            <div class="cards-heading-title h-display">Свиток слов</div>
+        </div>
+        <div class="srs-mode-tabs cards-tabs">
+            <button class="flashcard-mode-btn cards-tab ${currentMode === 'repeat' ? 'active' : ''}" id="tab-repeat">
+                <span class="cards-tab-icon" aria-hidden="true">↻</span> Повторение
             </button>
-            <button class="flashcard-mode-btn ${currentMode === 'library' ? 'active' : ''}" id="tab-library">
-                <i class="fas fa-list"></i> Библиотека
+            <button class="flashcard-mode-btn cards-tab ${currentMode === 'library' ? 'active' : ''}" id="tab-library">
+                <span class="cards-tab-icon" aria-hidden="true">☰</span> Библиотека
             </button>
         </div>
-        <div id="srs-mode-content"></div>
+        <div class="cards-scroll">
+            <div class="cards-scroll-rod cards-scroll-rod--top" aria-hidden="true">
+                <span class="cards-scroll-cap cards-scroll-cap--left"></span>
+                <span class="cards-scroll-cap cards-scroll-cap--right"></span>
+                <span class="cards-scroll-lip cards-scroll-lip--top"></span>
+            </div>
+            <div class="cards-scroll-body">
+                <span class="cards-scroll-corner cards-scroll-corner--tl" aria-hidden="true"></span>
+                <span class="cards-scroll-corner cards-scroll-corner--tr" aria-hidden="true"></span>
+                <span class="cards-scroll-corner cards-scroll-corner--bl" aria-hidden="true"></span>
+                <span class="cards-scroll-corner cards-scroll-corner--br" aria-hidden="true"></span>
+                <div id="srs-mode-content"></div>
+            </div>
+            <div class="cards-scroll-rod cards-scroll-rod--bottom" aria-hidden="true">
+                <span class="cards-scroll-cap cards-scroll-cap--left"></span>
+                <span class="cards-scroll-cap cards-scroll-cap--right"></span>
+                <span class="cards-scroll-lip cards-scroll-lip--bottom"></span>
+            </div>
+        </div>
     `;
 
     section.querySelector('#tab-repeat').addEventListener('click', () => {
