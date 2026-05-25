@@ -4430,22 +4430,20 @@ body.lesson-open .app-header { display: none !important; }
     display: block;
     font-family: 'Fredoka', 'Manrope', sans-serif;
     font-weight: 600;
-    font-size: 24px;
-    color: var(--cream);
-    margin: 0 -18px 14px;
-    padding: 14px 22px;
-    background: var(--teal);
-    border-bottom: 3px solid var(--teal-deep);
+    font-size: 22px;
+    color: var(--secondary-deep);
+    margin: 0 0 14px;
+    padding: 6px 0 12px;
+    background: none;
+    border-bottom: none;
     text-align: center;
     letter-spacing: 0.02em;
-    box-shadow: 0 4px 0 rgba(29,74,86,0.18);
+    box-shadow: none;
     /* Reset legacy gradient-clipped text trick from .battle-title */
     -webkit-background-clip: border-box;
     background-clip: border-box;
     -webkit-text-fill-color: currentColor;
 }
-#tab-games .games-menu .battle-title::before { content: '⚔ '; }
-#tab-games .games-menu .battle-title::after  { content: ' ⚔'; }
 
 #tab-games .games-menu-rows {
     display: flex;
@@ -4525,20 +4523,18 @@ body.lesson-open .app-header { display: none !important; }
     display: block;
     font-family: 'Fredoka', 'Manrope', sans-serif;
     font-weight: 600;
-    font-size: 24px;
-    color: var(--cream);
-    margin: 0 0 6px;
-    padding: 16px 22px;
-    background: var(--teal);
-    border-bottom: 3px solid var(--teal-deep);
+    font-size: 22px;
+    color: var(--secondary-deep);
+    margin: 0 0 4px;
+    padding: 12px 22px 6px;
+    background: none;
+    border-bottom: none;
     text-align: center;
-    box-shadow: 0 4px 0 rgba(29,74,86,0.18);
+    box-shadow: none;
     -webkit-background-clip: border-box;
     background-clip: border-box;
     -webkit-text-fill-color: currentColor;
 }
-#tab-games .battle-lobby .battle-title::before { content: '⚔ '; }
-#tab-games .battle-lobby .battle-title::after  { content: ' ⚔'; }
 #tab-games .battle-subtitle {
     text-align: center;
     color: var(--ink-soft);
