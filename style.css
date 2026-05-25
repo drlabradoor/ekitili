@@ -3336,3 +3336,207 @@ body.lesson-open .app-header { display: none !important; }
     background: #f8f8f8;
 }
 
+/* =====================================================
+   Step 2 — Lessons "Path" screen (batyr journey)
+   Overrides the legacy .lessons-path card layout.
+   ===================================================== */
+.lessons-path.path-screen {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background: var(--page);
+    border-radius: 0;
+    box-shadow: none;
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    overflow: visible;
+}
+
+/* Sticky gold band header */
+.path-header {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    width: 100%;
+    background: var(--secondary);
+    border-bottom: 3px solid var(--secondary-deep);
+    padding: 12px 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    box-shadow: 0 2px 0 rgba(122,74,28,0.18);
+}
+.path-header-emblem {
+    width: 42px;
+    height: 42px;
+    background: var(--secondary-deep);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid #3d2817;
+    flex-shrink: 0;
+}
+.path-header-text { flex: 1; min-width: 0; }
+.path-header-chapter {
+    font-family: 'Fredoka', 'Manrope', sans-serif;
+    font-weight: 500;
+    font-size: 10px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: rgba(249,246,242,0.85);
+}
+.path-header-title {
+    color: var(--cream);
+    font-size: 17px;
+    margin-top: 2px;
+    line-height: 1.15;
+}
+
+/* Canvas with steppe background + nodes */
+.path-canvas {
+    position: relative;
+    margin: 0 auto;
+    background: linear-gradient(180deg, #f6eecf 0%, #efe2bf 40%, #e8d4a3 100%);
+    overflow: hidden;
+}
+.path-bg-hills,
+.path-bg-line {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+}
+.path-scatter {
+    position: absolute;
+    pointer-events: none;
+    opacity: 0.85;
+}
+
+/* Lesson nodes */
+.path-node {
+    position: absolute;
+    transform: translate(-50%, -50%);
+    z-index: 2;
+    width: 0;
+    height: 0;
+}
+.path-node-btn {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    border: 3.5px solid var(--secondary-deep);
+    background: var(--cream-2);
+    color: var(--secondary-deep);
+    box-shadow: 0 5px 0 var(--secondary-deep);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Fredoka', 'Manrope', sans-serif;
+    font-weight: 700;
+    font-size: 26px;
+    cursor: pointer;
+    position: absolute;
+    left: -32px;
+    top: -32px;
+    transition: transform 0.08s, box-shadow 0.08s;
+}
+.path-node-btn:active:not(:disabled) {
+    transform: translateY(3px);
+    box-shadow: 0 2px 0 var(--secondary-deep);
+}
+.path-node-btn:disabled { cursor: not-allowed; }
+.path-node-icon { display: inline-block; line-height: 1; }
+.path-node-label {
+    position: absolute;
+    left: 50%;
+    top: 38px;
+    transform: translateX(-50%);
+    font-family: 'Fredoka', 'Manrope', sans-serif;
+    font-weight: 600;
+    font-size: 11px;
+    color: var(--secondary-deep);
+    background: rgba(249,246,242,0.85);
+    padding: 2px 8px;
+    border-radius: 8px;
+    white-space: nowrap;
+    pointer-events: none;
+}
+
+.path-node--done .path-node-btn {
+    background: var(--leaf);
+    color: var(--cream);
+    border-color: var(--leaf-deep);
+    box-shadow: 0 5px 0 var(--leaf-deep);
+}
+.path-node--done .path-node-label { color: var(--leaf-deep); }
+
+.path-node--current .path-node-btn {
+    background: var(--secondary);
+    color: var(--cream);
+    border-color: var(--secondary-deep);
+    animation: pulse-ring 1.6s ease-out infinite;
+}
+.path-node--current .path-node-label { color: var(--secondary-deep); font-weight: 700; }
+
+.path-node--locked .path-node-btn {
+    background: var(--cream-3);
+    color: rgba(122,74,28,0.55);
+    border-color: rgba(122,74,28,0.45);
+    box-shadow: 0 4px 0 rgba(122,74,28,0.35);
+}
+.path-node--locked .path-node-label {
+    color: rgba(61,40,23,0.5);
+    background: rgba(249,246,242,0.6);
+}
+
+/* "НАЧАТЬ" pill above the current node */
+.path-tooltip {
+    position: absolute;
+    left: 50%;
+    top: -78px;
+    transform: translateX(-50%);
+    background: var(--cream);
+    border: 2.5px solid var(--secondary-deep);
+    border-radius: 10px;
+    padding: 5px 12px;
+    font-family: 'Fredoka', 'Manrope', sans-serif;
+    font-weight: 600;
+    font-size: 12px;
+    color: var(--secondary-deep);
+    box-shadow: 0 3px 0 var(--secondary-deep);
+    white-space: nowrap;
+    letter-spacing: 0.05em;
+}
+.path-tooltip-arrow {
+    position: absolute;
+    bottom: -7px;
+    left: 50%;
+    transform: translateX(-50%) rotate(45deg);
+    width: 10px;
+    height: 10px;
+    background: var(--cream);
+    border-right: 2.5px solid var(--secondary-deep);
+    border-bottom: 2.5px solid var(--secondary-deep);
+}
+
+/* Batyr mascot bobbing near the current node */
+.path-mascot {
+    position: absolute;
+    width: 64px;
+    z-index: 3;
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+}
+.path-mascot img {
+    width: 100%;
+    height: auto;
+    display: block;
+}
+
+/* Bottom chunky "Пройти тест" button */
+.path-test-btn.btn-chunk {
+    margin: 14px auto 26px;
+    width: calc(100% - 32px);
+    max-width: 320px;
+}
