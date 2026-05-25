@@ -5315,4 +5315,320 @@ body.lesson-open .app-header { display: none !important; }
     color: var(--cream);
 }
 
+/* =====================================================
+   Step 7 — Profile + stats (батыр-степь редизайн)
+   Дизайн-референс: design-handoff/project/screens_profile.jsx
+   ===================================================== */
+#tab-profile .profile-section {
+    margin: 0;
+    padding: 22px 18px 22px;
+    background: linear-gradient(180deg, var(--secondary) 0%, #d1a84a 100%);
+    border-bottom: 3px solid var(--secondary-deep);
+    border-radius: 0;
+    box-shadow: 0 4px 0 rgba(122,74,28,0.18);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    color: var(--cream);
+    position: relative;
+    overflow: hidden;
+}
+#tab-profile .profile-section::before {
+    /* Subtle steppe-stripe ornament */
+    content: '';
+    position: absolute;
+    inset: 0;
+    background:
+        repeating-linear-gradient(115deg, transparent 0 30px, rgba(249,246,242,0.05) 30px 31px);
+    pointer-events: none;
+}
+#tab-profile .profile-avatar-large {
+    width: 84px;
+    height: 84px;
+    border-radius: 50%;
+    background: var(--cream);
+    color: var(--secondary-deep);
+    border: 4px solid var(--secondary-deep);
+    box-shadow: 0 4px 0 var(--secondary-deep);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Fredoka', 'Manrope', sans-serif;
+    font-weight: 700;
+    font-size: 36px;
+    line-height: 1;
+    margin: 4px auto 12px;
+    position: relative;
+    z-index: 1;
+}
+#tab-profile .profile-nickname {
+    font-family: 'Fredoka', 'Manrope', sans-serif;
+    font-weight: 600;
+    font-size: 22px;
+    letter-spacing: 0.01em;
+    color: var(--cream);
+    margin: 0;
+    position: relative;
+    z-index: 1;
+}
+#tab-profile .profile-about-label {
+    font-family: 'Fredoka', 'Manrope', sans-serif;
+    font-weight: 500;
+    font-size: 10px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: rgba(249,246,242,0.85);
+    margin: 14px 0 4px;
+    position: relative;
+    z-index: 1;
+}
+#tab-profile .profile-about {
+    font-family: 'Manrope', sans-serif;
+    font-size: 13px;
+    line-height: 1.5;
+    color: rgba(249,246,242,0.95);
+    max-width: 320px;
+    position: relative;
+    z-index: 1;
+}
+#tab-profile .profile-actions {
+    margin-top: 14px;
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    position: relative;
+    z-index: 1;
+}
+#tab-profile .profile-actions .login-btn,
+#tab-profile .profile-actions .logout-btn {
+    padding: 9px 18px;
+    background: var(--cream);
+    color: var(--secondary-deep);
+    border: 2px solid var(--secondary-deep);
+    border-radius: 12px;
+    box-shadow: 0 3px 0 var(--secondary-deep);
+    font-family: 'Fredoka', 'Manrope', sans-serif;
+    font-weight: 600;
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    cursor: pointer;
+}
+#tab-profile .profile-actions .logout-btn {
+    background: var(--coral);
+    color: var(--cream);
+    border-color: var(--coral-deep);
+    box-shadow: 0 3px 0 var(--coral-deep);
+}
+
+/* ---- Stats section ---- */
+#tab-profile .stats-section {
+    margin: 0;
+    padding: 16px 14px 30px;
+    background: var(--page);
+    border-radius: 0;
+    box-shadow: none;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+/* Stats row: circle + streak */
+#tab-profile .stat-main {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+#tab-profile .stat-circle-progress,
+#tab-profile .stat-streak {
+    flex: 1 1 160px;
+    background: var(--cream);
+    border: 2.5px solid var(--secondary-deep);
+    border-radius: 18px;
+    box-shadow: 0 4px 0 var(--secondary-deep);
+    padding: 14px 16px;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+}
+#tab-profile .stat-circle-progress canvas {
+    margin: 4px auto;
+}
+#tab-profile .circle-label {
+    font-family: 'Fredoka', 'Manrope', sans-serif;
+    font-weight: 600;
+    color: var(--secondary-deep);
+    font-size: 13px;
+    line-height: 1.3;
+}
+#tab-profile .circle-label > span {
+    font-size: 22px;
+    font-weight: 700;
+}
+#tab-profile .streak-label {
+    font-family: 'Fredoka', 'Manrope', sans-serif;
+    font-weight: 600;
+    font-size: 12px;
+    color: var(--secondary-deep);
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+}
+#tab-profile .streak-value {
+    font-family: 'Fredoka', 'Manrope', sans-serif;
+    font-weight: 700;
+    font-size: 44px;
+    line-height: 1;
+    color: var(--coral);
+    text-shadow: 0 3px 0 var(--coral-deep);
+}
+#tab-profile .streak-value.streak-inactive {
+    color: var(--ink-soft);
+    text-shadow: none;
+    opacity: 0.6;
+}
+#tab-profile .streak-desc {
+    font-family: 'Fredoka', 'Manrope', sans-serif;
+    font-size: 11px;
+    color: var(--ink-soft);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+}
+#tab-profile .streak-week {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 4px;
+    width: 100%;
+    margin-top: 8px;
+}
+#tab-profile .streak-day {
+    aspect-ratio: 1;
+    border-radius: 50%;
+    background: var(--cream-2);
+    border: 2px solid var(--cream-3);
+    color: var(--ink-soft);
+    font-family: 'Fredoka', 'Manrope', sans-serif;
+    font-weight: 600;
+    font-size: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+#tab-profile .streak-day.active {
+    background: var(--secondary);
+    color: var(--cream);
+    border-color: var(--secondary-deep);
+    box-shadow: 0 2px 0 var(--secondary-deep);
+}
+#tab-profile .streak-day.today {
+    outline: 2px dashed var(--coral);
+    outline-offset: 2px;
+}
+
+/* Activity chart card */
+#tab-profile .stat-activity,
+#tab-profile .stat-categories,
+#tab-profile .stat-achievements {
+    background: var(--cream);
+    border: 2.5px solid var(--secondary-deep);
+    border-radius: 18px;
+    box-shadow: 0 4px 0 var(--secondary-deep);
+    padding: 14px 16px 16px;
+}
+#tab-profile .activity-label,
+#tab-profile .cat-label,
+#tab-profile .ach-label {
+    font-family: 'Fredoka', 'Manrope', sans-serif;
+    font-weight: 500;
+    font-size: 11px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--secondary-deep);
+    opacity: 0.85;
+    margin: 0 0 10px;
+    text-align: center;
+}
+#tab-profile .stat-activity canvas {
+    display: block;
+    margin: 0 auto;
+}
+
+/* Category progress bars */
+#tab-profile .cat-bars {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+#tab-profile .cat-bar-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr 50px;
+    align-items: center;
+    gap: 10px;
+}
+#tab-profile .cat-bar-title {
+    font-family: 'Fredoka', 'Manrope', sans-serif;
+    font-weight: 600;
+    font-size: 13px;
+    color: var(--ink);
+}
+#tab-profile .cat-bar {
+    height: 12px;
+    background: var(--cream-3);
+    border: 2px solid var(--secondary-deep);
+    border-radius: 10px;
+    overflow: hidden;
+}
+#tab-profile .cat-bar-fill {
+    height: 100%;
+    background: var(--secondary);
+    border-right: 2px solid var(--secondary-deep);
+    transition: width 0.4s ease;
+}
+#tab-profile .cat-bar-value {
+    font-family: 'Fredoka', 'Manrope', sans-serif;
+    font-weight: 700;
+    font-size: 12px;
+    color: var(--secondary-deep);
+    text-align: right;
+}
+
+/* Achievements grid */
+#tab-profile .ach-list {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+}
+#tab-profile .ach-item {
+    padding: 10px 6px;
+    background: var(--cream);
+    border: 2.5px solid var(--secondary-deep);
+    border-radius: 14px;
+    box-shadow: 0 4px 0 var(--secondary-deep);
+    text-align: center;
+    cursor: pointer;
+    transition: transform 0.06s, box-shadow 0.06s;
+}
+#tab-profile .ach-item:active {
+    transform: translateY(2px);
+    box-shadow: 0 2px 0 var(--secondary-deep);
+}
+#tab-profile .ach-item-icon { font-size: 30px; line-height: 1; margin-bottom: 4px; }
+#tab-profile .ach-item-title {
+    font-family: 'Fredoka', 'Manrope', sans-serif;
+    font-weight: 600;
+    font-size: 11px;
+    color: var(--secondary-deep);
+    line-height: 1.2;
+}
+
+@media (max-width: 520px) {
+    #tab-profile .stat-main { gap: 8px; }
+    #tab-profile .stat-circle-progress,
+    #tab-profile .stat-streak { flex: 1 1 100%; }
+    #tab-profile .ach-list { grid-template-columns: repeat(2, 1fr); }
+}
+
 
