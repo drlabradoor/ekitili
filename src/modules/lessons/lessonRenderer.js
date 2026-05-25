@@ -2,7 +2,6 @@
 // Дизайн-референс: design-handoff/project/screens_path.jsx
 import { lessonsData, lessonsProgress } from '../../data/lessons.js';
 import { showLesson } from './lessons.js';
-import { showTest } from './test.js';
 
 // Геометрия пути (мобильная ширина)
 const PATH_W = 360;
@@ -16,20 +15,6 @@ function nodePos(i) {
         x: PATH_W / 2 + Math.sin(i * 0.85) * PATH_AMP,
         y: PAD_TOP + i * NODE_SPACING
     };
-}
-
-function shanyrakSvg(size = 26, color = 'var(--gold-soft)') {
-    return `<svg viewBox="0 0 60 60" width="${size}" height="${size}" aria-hidden="true">
-        <circle cx="30" cy="30" r="26" stroke="${color}" stroke-width="2.5" fill="none"/>
-        <circle cx="30" cy="30" r="18" stroke="${color}" stroke-width="1.6" fill="none"/>
-        <g stroke="${color}" stroke-width="1.6" fill="none">
-            <line x1="30" y1="4" x2="30" y2="56"/>
-            <line x1="4" y1="30" x2="56" y2="30"/>
-            <line x1="11" y1="11" x2="49" y2="49"/>
-            <line x1="49" y1="11" x2="11" y2="49"/>
-        </g>
-        <circle cx="30" cy="30" r="3" fill="${color}"/>
-    </svg>`;
 }
 
 function yurtSvg(size = 60, color = '#8a5c28') {
@@ -70,7 +55,7 @@ function steppeBgSvg(totalH) {
         mountains += `<path d="M0 ${y} L${PATH_W * 0.18} ${y - 70} L${PATH_W * 0.3} ${y - 20} L${PATH_W * 0.48} ${y - 90} L${PATH_W * 0.65} ${y - 30} L${PATH_W * 0.82} ${y - 80} L${PATH_W} ${y - 20} L${PATH_W} ${y + 20} L0 ${y + 20} Z"
                           fill="#7a4a1c" opacity="0.1"/>`;
     }
-    return `<svg class="path-bg-hills" width="${PATH_W}" height="${totalH}" viewBox="0 0 ${PATH_W} ${totalH}" preserveAspectRatio="none" aria-hidden="true">
+    return `<svg class="path-bg-hills" viewBox="0 0 ${PATH_W} ${totalH}" preserveAspectRatio="none" aria-hidden="true">
         ${hills}
         ${mountains}
     </svg>`;
@@ -89,33 +74,26 @@ function pathLineSvg(positions, totalH) {
     </svg>`;
 }
 
-// Псевдослучайное, но стабильное расположение декораций вдоль пути.
+// Декорации позиционируются в процентах от полной ширины контейнера,
+// чтобы юрты/мечи разлетались по всему фону, а не толпились в центре.
 function scatterDecorations(totalH) {
     const decorations = [];
     const kinds = ['yurt', 'sword', 'helmet'];
     const slots = Math.floor(totalH / 200);
     for (let i = 0; i < slots; i++) {
         const kind = kinds[i % kinds.length];
-        const x = (i % 2 === 0 ? 0.1 : 0.82) + (i % 3) * 0.02;
+        // Слегка отодвигаем от центра, где идёт дорога с узлами.
+        const isLeft = i % 2 === 0;
+        const xPct = isLeft ? 6 + (i * 5) % 14 : 78 + (i * 3) % 12;
         const y = 200 + i * 200 + ((i * 37) % 80);
         const rot = ((i * 19) % 40) - 20;
-        const scale = 0.7 + ((i * 7) % 5) * 0.08;
-        const svg = kind === 'yurt' ? yurtSvg(60 * scale)
-            : kind === 'sword' ? fallenSwordSvg(50 * scale, '#7a4a1c', rot)
-                : fallenHelmetSvg(32 * scale);
-        decorations.push(`<div class="path-scatter" style="left:${x * PATH_W}px;top:${y}px">${svg}</div>`);
+        const scale = 0.75 + ((i * 7) % 5) * 0.09;
+        const svg = kind === 'yurt' ? yurtSvg(64 * scale)
+            : kind === 'sword' ? fallenSwordSvg(56 * scale, '#7a4a1c', rot)
+                : fallenHelmetSvg(36 * scale);
+        decorations.push(`<div class="path-scatter" style="left:${xPct}%;top:${y}px">${svg}</div>`);
     }
     return decorations.join('');
-}
-
-function chapterMeta() {
-    const total = lessonsData.length || 1;
-    const done = lessonsProgress.filter(p => p === true).length;
-    const titles = lessonsData.map(l => l.title).slice(0, 3).join(' · ');
-    return {
-        chapterLine: `Урок ${Math.min(done + 1, total)} из ${total}`,
-        chapterTitle: titles || 'Первые шаги'
-    };
 }
 
 export function renderLessonsPath() {
@@ -134,28 +112,21 @@ export function renderLessonsPath() {
         ? positions[positions.length - 1].y + PAD_BOTTOM
         : 200;
 
-    // Header (sticky, gold band)
-    const { chapterLine, chapterTitle } = chapterMeta();
-    const header = document.createElement('div');
-    header.className = 'path-header';
-    header.innerHTML = `
-        <div class="path-header-emblem">${shanyrakSvg(26)}</div>
-        <div class="path-header-text">
-            <div class="path-header-chapter">${chapterLine}</div>
-            <div class="path-header-title h-display">${chapterTitle}</div>
-        </div>
-    `;
-    lessonsPath.appendChild(header);
-
-    // Steppe canvas with the winding path
+    // Full-width steppe canvas; nodes live in a centered 360-wide inner layer.
     const canvas = document.createElement('div');
     canvas.className = 'path-canvas';
-    canvas.style.width = PATH_W + 'px';
     canvas.style.height = totalH + 'px';
 
-    canvas.innerHTML = steppeBgSvg(totalH)
-        + scatterDecorations(totalH)
-        + pathLineSvg(positions, totalH);
+    const bgLayer = document.createElement('div');
+    bgLayer.className = 'path-bg-layer';
+    bgLayer.innerHTML = steppeBgSvg(totalH) + scatterDecorations(totalH);
+    canvas.appendChild(bgLayer);
+
+    const inner = document.createElement('div');
+    inner.className = 'path-canvas-inner';
+    inner.style.width = PATH_W + 'px';
+    inner.style.height = totalH + 'px';
+    inner.innerHTML = pathLineSvg(positions, totalH);
 
     // Lesson nodes
     lessonsData.forEach((lesson, i) => {
@@ -184,7 +155,7 @@ export function renderLessonsPath() {
         if (state !== 'locked') {
             node.querySelector('.path-node-btn').addEventListener('click', () => showLesson(i));
         }
-        canvas.appendChild(node);
+        inner.appendChild(node);
     });
 
     // Batyr mascot bobbing next to current node
@@ -196,16 +167,9 @@ export function renderLessonsPath() {
         mascot.style.left = (p.x + dir * 54) + 'px';
         mascot.style.top = (p.y - 24) + 'px';
         mascot.innerHTML = `<img src="assets/images/horse_happy.png" alt="" class="mascot-shadow">`;
-        canvas.appendChild(mascot);
+        inner.appendChild(mascot);
     }
 
+    canvas.appendChild(inner);
     lessonsPath.appendChild(canvas);
-
-    // Chunky test button at the bottom (final chapter goal)
-    const testBtn = document.createElement('button');
-    testBtn.type = 'button';
-    testBtn.className = 'btn-chunk teal path-test-btn';
-    testBtn.textContent = '🎓 Пройти тест';
-    testBtn.addEventListener('click', () => showTest());
-    lessonsPath.appendChild(testBtn);
 }
