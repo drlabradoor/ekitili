@@ -69,7 +69,6 @@ function initBattleSocket(httpServer) {
         socket.on('join_battle', (data) => handleJoinBattle(io, socket, data));
         socket.on('attack_card', (data) => handleAttackCard(io, socket, data));
         socket.on('defend_answer', (data) => handleDefendAnswer(io, socket, data));
-        socket.on('use_special', (data) => handleUseSpecial(io, socket, data));
         socket.on('disconnect', () => handleDisconnect(io, socket));
     });
 
@@ -144,10 +143,6 @@ function createGame(gameId, p1, p2) {
                 maxCombo: 0,
                 correctAnswers: 0,
                 crits: 0,
-                specialCharges: 3,
-                activeShield: false,
-                activeFrost: false,
-                activeDouble: false,
                 cards: shuffleArray([...p1.cards])
             },
             {
@@ -159,10 +154,6 @@ function createGame(gameId, p1, p2) {
                 maxCombo: 0,
                 correctAnswers: 0,
                 crits: 0,
-                specialCharges: 3,
-                activeShield: false,
-                activeFrost: false,
-                activeDouble: false,
                 cards: shuffleArray([...p2.cards])
             }
         ],
@@ -188,8 +179,7 @@ function emitGameStart(io, game) {
             playerSide: i === 0 ? 'left' : 'right',
             players: game.players.map(p => ({
                 username: p.username,
-                hp: p.hp,
-                specialCharges: p.specialCharges
+                hp: p.hp
             })),
             attackerIdx: game.attackerIdx
         });
@@ -210,7 +200,7 @@ function dealHand(io, game) {
 
     const attackerSock = io.sockets.sockets.get(attacker.socketId);
     if (attackerSock) {
-        attackerSock.emit('your_turn_attack', { hand });
+        attackerSock.emit('your_turn_attack', { hand, timerSeconds: game.timerSeconds });
     }
 
     // Защитнику — ожидание
@@ -219,6 +209,49 @@ function dealHand(io, game) {
     if (defSock) {
         defSock.emit('opponent_attacking', {});
     }
+
+    // Таймаут для атакующего — автовыбор случайной карты
+    game.attackTimeout = setTimeout(() => {
+        handleAttackTimeout(io, game);
+    }, game.timerSeconds * 1000);
+}
+
+// =====================================================
+// Общая логика: карта выбрана атакующим (явно или по таймауту)
+// =====================================================
+function processAttackCard(io, game, cardIndex) {
+    const card = game.hand[cardIndex];
+    game.currentCard = card;
+    game.correctAnswer = card.front;
+    game.status = 'defending';
+
+    const attacker = game.players[game.attackerIdx];
+    const defIdx = 1 - game.attackerIdx;
+    const defender = game.players[defIdx];
+    const options = generateOptions(card.front, attacker.cards);
+    game.options = options;
+
+    const timerForThisTurn = game.timerSeconds;
+    game.defenseStartTime = Date.now();
+    game.defenseTimerSeconds = timerForThisTurn;
+
+    const defSock = io.sockets.sockets.get(defender.socketId);
+    if (defSock) {
+        defSock.emit('your_turn_defend', {
+            card: { svgShape: card.svgShape, back: card.back },
+            options,
+            timerSeconds: timerForThisTurn
+        });
+    }
+
+    const atkSock = io.sockets.sockets.get(attacker.socketId);
+    if (atkSock) {
+        atkSock.emit('opponent_defending', { card: { svgShape: card.svgShape } });
+    }
+
+    game.defenseTimeout = setTimeout(() => {
+        handleDefenseTimeout(io, game);
+    }, timerForThisTurn * 1000);
 }
 
 // =====================================================
@@ -232,51 +265,18 @@ function handleAttackCard(io, socket, data) {
     const cardIndex = data.index;
     if (cardIndex < 0 || cardIndex >= game.hand.length) return;
 
-    const card = game.hand[cardIndex];
-    game.currentCard = card;
-    game.correctAnswer = card.front; // правильный ответ — казахское слово
-    game.status = 'defending';
+    clearTimeout(game.attackTimeout);
+    game.attackTimeout = null;
 
-    // Генерируем варианты ответа (казахские слова — front)
-    const attacker = game.players[game.attackerIdx];
-    const options = generateOptions(card.front, attacker.cards);
-    game.options = options;
+    processAttackCard(io, game, cardIndex);
+}
 
-    // DRAFT: Спецприёмы (пока отключены, переделываем механику)
-    // const defIdx = 1 - game.attackerIdx;
-    // const defender = game.players[defIdx];
-    // let timerForThisTurn = game.timerSeconds;
-    // if (defender.activeFrost) {
-    //     timerForThisTurn = Math.max(MIN_TIMER, timerForThisTurn - 3);
-    //     defender.activeFrost = false;
-    // }
-    const defIdx = 1 - game.attackerIdx;
-    const defender = game.players[defIdx];
-    let timerForThisTurn = game.timerSeconds;
-
-    game.defenseStartTime = Date.now();
-    game.defenseTimerSeconds = timerForThisTurn;
-
-    // Отправляем защитнику картинку + варианты (казахские слова) + подсказку (русское название)
-    const defSock = io.sockets.sockets.get(defender.socketId);
-    if (defSock) {
-        defSock.emit('your_turn_defend', {
-            card: { svgShape: card.svgShape, back: card.back },
-            options,
-            timerSeconds: timerForThisTurn
-        });
-    }
-
-    // Атакующему — ожидание
-    const atkSock = io.sockets.sockets.get(attacker.socketId);
-    if (atkSock) {
-        atkSock.emit('opponent_defending', { card: { svgShape: card.svgShape } });
-    }
-
-    // Таймаут
-    game.defenseTimeout = setTimeout(() => {
-        handleDefenseTimeout(io, game);
-    }, timerForThisTurn * 1000);
+// =====================================================
+// Таймаут атакующего — ход переходит к оппоненту
+// =====================================================
+function handleAttackTimeout(io, game) {
+    if (game.status !== 'attacking') return;
+    nextTurn(io, game, true);
 }
 
 // =====================================================
@@ -439,8 +439,7 @@ function emitTurnResult(io, game, result) {
         players: game.players.map(p => ({
             username: p.username,
             hp: p.hp,
-            combo: p.combo,
-            specialCharges: p.specialCharges
+            combo: p.combo
         }))
     });
 }
@@ -479,6 +478,7 @@ function nextTurn(io, game, switchAttacker = true) {
 function endGame(io, game, winnerIdx) {
     game.status = 'over';
     clearTimeout(game.defenseTimeout);
+    clearTimeout(game.attackTimeout);
 
     for (let i = 0; i < 2; i++) {
         const sock = io.sockets.sockets.get(game.players[i].socketId);
@@ -496,39 +496,6 @@ function endGame(io, game, winnerIdx) {
     }
 
     activeGames.delete(game.id);
-}
-
-// =====================================================
-// Спецприёмы (DRAFT: отключены, переделываем механику)
-// =====================================================
-function handleUseSpecial(io, socket, data) {
-    // DRAFT MODE: спецприёмы отключены пока переделываем механику
-    // const game = getGameForSocket(socket);
-    // if (!game || game.status === 'over') return;
-    //
-    // const playerIdx = socket.data.playerIdx;
-    // const player = game.players[playerIdx];
-    //
-    // if (player.specialCharges <= 0) return;
-    //
-    // const special = data.special;
-    // if (!['shield', 'frost', 'double'].includes(special)) return;
-    //
-    // // Нельзя использовать уже активный
-    // if (special === 'shield' && player.activeShield) return;
-    // if (special === 'frost' && player.activeFrost) return;
-    // if (special === 'double' && player.activeDouble) return;
-    //
-    // player.specialCharges--;
-    // if (special === 'shield') player.activeShield = true;
-    // if (special === 'frost') player.activeFrost = true;
-    // if (special === 'double') player.activeDouble = true;
-    //
-    // io.to(game.id).emit('special_used', {
-    //     playerIdx,
-    //     special,
-    //     specialCharges: player.specialCharges
-    // });
 }
 
 // =====================================================

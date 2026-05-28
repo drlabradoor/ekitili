@@ -106,7 +106,6 @@ function connectSocket() {
     socket.on('turn_result', (data) => handleTurnResult(data));
     socket.on('new_turn', (data) => handleNewTurn(data));
     socket.on('game_over', (data) => handleGameOver(data));
-    socket.on('special_used', (data) => handleSpecialUsed(data));
     socket.on('opponent_left', () => handleOpponentLeft());
 
     socket.on('disconnect', () => {
@@ -171,13 +170,11 @@ function handleGameStart(data) {
         player: {
             username: data.players[data.playerIdx].username,
             hp: data.players[data.playerIdx].hp,
-            specialCharges: data.players[data.playerIdx].specialCharges,
             combo: 0
         },
         opponent: {
             username: data.players[1 - data.playerIdx].username,
             hp: data.players[1 - data.playerIdx].hp,
-            specialCharges: data.players[1 - data.playerIdx].specialCharges,
             combo: 0
         }
     };
@@ -185,7 +182,6 @@ function handleGameStart(data) {
     const container = document.getElementById('battle-container');
     if (container) {
         renderArena(container, gameState);
-        bindSpecialButtons();
     }
 }
 
@@ -196,10 +192,12 @@ function handleAttackTurn(data) {
     if (!actionArea || !turnInfo) return;
 
     renderAttackPhase(actionArea, data.hand, turnInfo);
+    startDefenseTimer(data.timerSeconds);
 
     // Привязать клики по картам
     actionArea.querySelectorAll('.attack-card').forEach(card => {
         card.addEventListener('click', () => {
+            clearDefenseTimer();
             const index = parseInt(card.dataset.index);
             socket.emit('attack_card', { index });
             animateBatyrAttack(gameState.playerSide);
@@ -254,10 +252,8 @@ function handleTurnResult(data) {
     const oppData = data.players[1 - gameState.playerIdx];
     gameState.player.hp = myData.hp;
     gameState.player.combo = myData.combo;
-    gameState.player.specialCharges = myData.specialCharges;
     gameState.opponent.hp = oppData.hp;
     gameState.opponent.combo = oppData.combo;
-    gameState.opponent.specialCharges = oppData.specialCharges;
 
     // Обновляем HP-бары
     updateBatyrHP('left',
@@ -306,7 +302,6 @@ function handleNewTurn(data) {
         const target = i === gameState.playerIdx ? gameState.player : gameState.opponent;
         target.hp = data.players[i].hp;
         target.combo = data.players[i].combo;
-        target.specialCharges = data.players[i].specialCharges;
     }
 }
 
@@ -350,17 +345,6 @@ function handleGameOver(data) {
     }
 }
 
-function handleSpecialUsed(data) {
-    const isMe = data.playerIdx === gameState.playerIdx;
-    const target = isMe ? gameState.player : gameState.opponent;
-    target.specialCharges = data.specialCharges;
-
-    // Обновить кнопки спецприёмов если это наш игрок
-    if (isMe) {
-        updateSpecialButtons();
-    }
-}
-
 function handleOpponentLeft() {
     gameState.status = 'over';
     clearDefenseTimer();
@@ -396,11 +380,17 @@ function startDefenseTimer(seconds) {
     timerBar.style.transition = 'none';
     timerBar.style.width = '100%';
 
-    // Принудительный reflow
-    timerBar.offsetHeight;
-
-    timerBar.style.transition = `width ${seconds}s linear`;
-    timerBar.style.width = '0%';
+    // Двойной rAF гарантирует что браузер отрисует начальное состояние
+    // до запуска CSS-перехода (простой offsetHeight не всегда срабатывает
+    // при свежесозданных innerHTML-элементах)
+    requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+            const bar = document.getElementById('defend-timer-bar');
+            if (!bar) return;
+            bar.style.transition = `width ${seconds}s linear`;
+            bar.style.width = '0%';
+        });
+    });
 }
 
 function clearDefenseTimer() {
@@ -410,28 +400,3 @@ function clearDefenseTimer() {
     }
 }
 
-// =====================================================
-// Спецприёмы — привязка кнопок
-// =====================================================
-function bindSpecialButtons() {
-    // Кнопки спецприёмов — в нижней панели арены
-    document.querySelectorAll('#arena-specials .special-btn').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            const special = btn.dataset.special;
-            if (socket && gameState.status !== 'over') {
-                socket.emit('use_special', { special });
-            }
-        });
-    });
-}
-
-function updateSpecialButtons() {
-    const charges = gameState.player.specialCharges;
-    document.querySelectorAll('#arena-specials .special-btn').forEach((btn, i) => {
-        if (i >= charges) {
-            btn.classList.add('special-btn--used');
-            btn.disabled = true;
-        }
-    });
-}

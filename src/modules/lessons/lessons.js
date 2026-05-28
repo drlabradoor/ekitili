@@ -1,6 +1,7 @@
-// Основная логика уроков
-// Дизайн-референс: design-handoff/project/screens_lesson.jsx
-// 4 шага: 0 теория → 1 задача → 2 задача → 3 новые слова.
+// Основная логика уроков — пошаговый движок в стиле Duolingo.
+// Урок = массив шагов (steps) из src/data/lessons.js. Типы:
+//   theory · choice · match · build · words
+// Поток: показываем шаг → пользователь отвечает → «Проверить» → фидбэк → «Продолжить».
 import { lessonsData, lessonsProgress, markLessonCompleted, getRecentLessonIds } from '../../data/lessons.js';
 import { enrollWords } from '../../data/userWords.js';
 import { syncFlashcardsShim } from '../../data/flashcards.js';
@@ -9,44 +10,43 @@ import { renderLessonsPath } from './lessonRenderer.js';
 import { renderStats } from '../profile/profileRenderer.js';
 import { recordActivity } from '../../services/streak.js';
 import { postEnroll } from '../../services/srsSync.js';
+import { getWord } from '../../data/words.js';
 
-const TOTAL_STEPS = 4;
 const HEARTS_FULL = 5;
-const STEP_LETTERS = ['A', 'B', 'C', 'D', 'E'];
+const LETTERS = ['A', 'B', 'C', 'D', 'E', 'F'];
 
-let currentLessonIdx = 0;
-let currentStep = 0;
-let lessonAnswers = [];
-let lessonCompleteModal = null;
+// --- Состояние текущего прохождения ---
+let lessonIdx = 0;
+let steps = [];
+let stepNo = 0;
+let hearts = HEARTS_FULL;
+let validated = false;     // нажата ли «Проверить» на текущем шаге
+let checkFn = null;        // () => boolean — проверка ответа для шагов с needsCheck
 
-function createLessonCompleteModal() {
-    if (lessonCompleteModal) return lessonCompleteModal;
-
-    lessonCompleteModal = document.getElementById('lesson-complete-modal');
-    if (!lessonCompleteModal) {
-        lessonCompleteModal = document.createElement('div');
-        lessonCompleteModal.id = 'lesson-complete-modal';
-        lessonCompleteModal.className = 'modal';
-        lessonCompleteModal.style.display = 'none';
-        lessonCompleteModal.innerHTML = `
-            <div class="modal-content">
-                <h2>Урок завершён!</h2>
-                <div style="font-size:1.2em;margin:18px 0;">Поздравляем! Вы успешно прошли урок 🎉</div>
-                <button id="close-lesson-complete">Закрыть</button>
-            </div>
-        `;
-        document.body.appendChild(lessonCompleteModal);
-        lessonCompleteModal.querySelector('#close-lesson-complete').onclick = () => {
-            lessonCompleteModal.style.display = 'none';
-        };
-    }
-    return lessonCompleteModal;
+function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m]));
 }
 
+function shuffle(arr) {
+    const a = arr.slice();
+    for (let i = a.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
+}
+
+// --- Точка входа: открыть урок ---
 export function showLesson(idx) {
-    currentLessonIdx = idx;
-    currentStep = 0;
-    lessonAnswers = [null, null];
+    lessonIdx = idx;
+    const lesson = lessonsData[idx];
+    if (!lesson) return;
+
+    steps = Array.isArray(lesson.steps) ? lesson.steps : [];
+    if (steps.length === 0) return;
+
+    stepNo = 0;
+    hearts = HEARTS_FULL;
 
     const lessonPage = document.querySelector('#tab-lessons .lesson-page');
     if (!lessonPage) return;
@@ -65,178 +65,323 @@ export function showLesson(idx) {
             </div>
             <div class="lesson-body"></div>
             <div class="lesson-bottom">
+                <div class="lesson-solution" hidden></div>
                 <button type="button" class="lesson-action-btn btn-chunk" disabled>Далее</button>
             </div>
         </div>
     `;
 
-    lessonPage.style.position = 'fixed';
-    lessonPage.style.top = '0';
-    lessonPage.style.left = '0';
-    lessonPage.style.right = '0';
-    lessonPage.style.bottom = '0';
-    lessonPage.style.width = '100vw';
-    lessonPage.style.height = '100vh';
-    lessonPage.style.background = 'var(--page)';
-    lessonPage.style.zIndex = '1000';
-    lessonPage.style.overflow = 'hidden';
-    lessonPage.style.display = 'block';
-    lessonPage.style.margin = '0';
-    lessonPage.style.padding = '0';
-    lessonPage.style.borderRadius = '0';
-    lessonPage.style.boxShadow = 'none';
+    // Полноэкранный режим поверх «пути батыра».
+    Object.assign(lessonPage.style, {
+        position: 'fixed', top: '0', left: '0', right: '0', bottom: '0',
+        width: '100vw', height: '100vh', background: 'var(--page)',
+        zIndex: '1000', overflow: 'hidden', display: 'block',
+        margin: '0', padding: '0', borderRadius: '0', boxShadow: 'none'
+    });
 
     lessonPage.querySelector('.lesson-close').addEventListener('click', closeLessonPage);
+    lessonPage.querySelector('.lesson-action-btn').addEventListener('click', onAction);
 
     document.body.classList.add('lesson-open');
     const lessonsPath = document.querySelector('#tab-lessons .lessons-path');
     if (lessonsPath) lessonsPath.style.display = 'none';
 
-    renderLessonStep();
+    renderStep();
 }
 
-function escapeHtml(s) {
-    return String(s).replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m]));
+// --- Доступ к элементам экрана ---
+function els() {
+    const page = document.querySelector('#tab-lessons .lesson-page');
+    if (!page) return null;
+    return {
+        page,
+        screen: page.querySelector('.lesson-screen'),
+        body: page.querySelector('.lesson-body'),
+        action: page.querySelector('.lesson-action-btn'),
+        fill: page.querySelector('.lesson-progress-fill'),
+        hearts: page.querySelector('.lesson-hearts-count'),
+        solution: page.querySelector('.lesson-solution')
+    };
 }
 
-function renderLessonStep() {
-    const lesson = lessonsData[currentLessonIdx];
-    const lessonPage = document.querySelector('#tab-lessons .lesson-page');
-    if (!lessonPage) return;
+function setAction(label, enabled, variant) {
+    const e = els();
+    if (!e) return;
+    e.action.textContent = label;
+    e.action.disabled = !enabled;
+    e.action.className = 'lesson-action-btn btn-chunk' + (variant ? ' ' + variant : '');
+}
 
-    const screen = lessonPage.querySelector('.lesson-screen');
-    const body = lessonPage.querySelector('.lesson-body');
-    const actionBtn = lessonPage.querySelector('.lesson-action-btn');
-    const progressFill = lessonPage.querySelector('.lesson-progress-fill');
-    if (!screen || !body || !actionBtn || !progressFill) return;
+function updateHearts() {
+    const e = els();
+    if (!e) return;
+    e.hearts.textContent = hearts;
+    e.hearts.parentElement.classList.toggle('is-low', hearts <= 1);
+}
 
-    // Сбрасываем стиль фидбэка и кнопки между шагами.
-    screen.classList.remove('feedback-ok', 'feedback-bad');
-    actionBtn.className = 'lesson-action-btn btn-chunk';
-    actionBtn.disabled = true;
-    actionBtn.textContent = currentStep === TOTAL_STEPS - 1 ? 'Завершить' : 'Далее';
+function isLastStep() {
+    return stepNo === steps.length - 1;
+}
 
-    // Прогресс-бар: заполнено пропорционально текущему шагу.
-    progressFill.style.width = `${(currentStep / TOTAL_STEPS) * 100}%`;
+// --- Рендер текущего шага ---
+function renderStep() {
+    const e = els();
+    if (!e) return;
+    const step = steps[stepNo];
 
-    if (currentStep === 0) {
-        // Теория — больших правильных/неправильных нет, можно сразу дальше.
-        body.innerHTML = `
-            <div class="lesson-prompt">
-                <div class="h-ornament">Теория · ${escapeHtml(lesson.title)}</div>
-                <div class="lesson-prompt-title h-display">Прочтите и запомните</div>
-            </div>
-            <div class="lesson-theory sticker">${lesson.theory}</div>
-        `;
-        actionBtn.disabled = false;
-        actionBtn.textContent = 'Продолжить';
-        actionBtn.onclick = advanceStep;
-        return;
+    validated = false;
+    checkFn = null;
+    step.__needsCheck = false;
+
+    e.screen.classList.remove('feedback-ok', 'feedback-bad');
+    e.solution.hidden = true;
+    e.solution.innerHTML = '';
+    e.fill.style.width = `${(stepNo / steps.length) * 100}%`;
+    updateHearts();
+
+    switch (step.type) {
+        case 'theory': return renderTheory(step, e);
+        case 'choice': return renderChoice(step, e);
+        case 'match':  return renderMatch(step, e);
+        case 'build':  return renderBuild(step, e);
+        case 'words':  return renderWords(step, e);
+        default:       return advance();
     }
+}
 
-    if (currentStep === 1 || currentStep === 2) {
-        const taskIdx = currentStep - 1;
-        const task = lesson.tasks[taskIdx];
+function promptHtml(eyebrow, title) {
+    return `
+        <div class="lesson-prompt">
+            <div class="h-ornament">${escapeHtml(eyebrow || '')}</div>
+            <div class="lesson-prompt-title h-display">${escapeHtml(title || '')}</div>
+        </div>`;
+}
 
-        body.innerHTML = `
-            <div class="lesson-prompt">
-                <div class="h-ornament">Выберите верный ответ</div>
-                <div class="lesson-prompt-title h-display">${escapeHtml(task.question)}</div>
-            </div>
-            <div class="lesson-options"></div>
-        `;
-        const opts = body.querySelector('.lesson-options');
-        task.options.forEach((opt, j) => {
-            const btn = document.createElement('button');
-            btn.type = 'button';
-            btn.className = 'task-opt-btn lesson-option';
-            btn.innerHTML = `
-                <span class="lesson-option-letter" aria-hidden="true">${STEP_LETTERS[j] || (j + 1)}</span>
-                <span class="lesson-option-label">${escapeHtml(opt)}</span>
-            `;
-            btn.addEventListener('click', () => {
-                if (lessonAnswers[taskIdx] === true) return;
-                if (j === task.answer) {
-                    btn.classList.add('is-correct');
-                    lessonAnswers[taskIdx] = true;
-                    screen.classList.remove('feedback-bad');
-                    screen.classList.add('feedback-ok');
-                    actionBtn.disabled = false;
-                    actionBtn.classList.add('leaf');
-                    actionBtn.textContent = 'Продолжить';
-                    Array.from(opts.querySelectorAll('button')).forEach(b => b.disabled = true);
-                } else {
-                    btn.classList.add('is-wrong');
-                    btn.disabled = true;
-                    lessonAnswers[taskIdx] = false;
-                    screen.classList.add('feedback-bad');
-                }
-            });
-            opts.appendChild(btn);
+// ---------- Теория ----------
+function renderTheory(step, e) {
+    e.body.innerHTML = promptHtml(step.eyebrow, step.title)
+        + `<div class="lesson-theory sticker">${step.html || ''}</div>`;
+    setAction(isLastStep() ? 'Завершить' : 'Продолжить', true);
+}
+
+// ---------- Выбор перевода ----------
+function renderChoice(step, e) {
+    step.__needsCheck = true;
+    e.body.innerHTML = promptHtml(step.eyebrow, step.question) + `<div class="lesson-options"></div>`;
+    const opts = e.body.querySelector('.lesson-options');
+
+    let selected = -1;
+    const buttons = step.options.map((opt, j) => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'task-opt-btn lesson-option';
+        btn.innerHTML = `
+            <span class="lesson-option-letter" aria-hidden="true">${LETTERS[j] || (j + 1)}</span>
+            <span class="lesson-option-label">${escapeHtml(opt)}</span>`;
+        btn.addEventListener('click', () => {
+            if (validated) return;
+            selected = j;
+            buttons.forEach(b => b.classList.remove('is-selected'));
+            btn.classList.add('is-selected');
+            setAction('Проверить', true);
         });
-        actionBtn.onclick = () => {
-            if (lessonAnswers[taskIdx] === true) advanceStep();
-        };
-        return;
-    }
+        opts.appendChild(btn);
+        return btn;
+    });
 
-    if (currentStep === 3) {
-        body.innerHTML = `
-            <div class="lesson-prompt">
-                <div class="h-ornament">Новые слова в копилку</div>
-                <div class="lesson-prompt-title h-display">${escapeHtml(lesson.title)}</div>
-            </div>
-            <div class="lesson-words sticker"><div class="lesson-words-placeholder">Загрузка…</div></div>
-        `;
-        import('../../data/words.js').then(({ getWord }) => {
-            const wordIds = lesson.wordIds ?? [];
-            const words = wordIds.map(id => getWord(id)).filter(Boolean);
-            const wordsBox = lessonPage.querySelector('.lesson-words');
-            if (!wordsBox) return;
-            wordsBox.innerHTML = words.map(w => `
-                <div class="lesson-word">
-                    <div class="lesson-word-kz">${escapeHtml(w.kz)}</div>
-                    <div class="lesson-word-ru">${escapeHtml(w.ru)}</div>
-                    ${w.phonetic ? `<div class="lesson-word-phonetic">${escapeHtml(w.phonetic)}</div>` : ''}
-                </div>
-            `).join('');
+    setAction('Проверить', false);
+    checkFn = () => {
+        const ok = selected === step.answer;
+        buttons.forEach((b, j) => {
+            b.disabled = true;
+            if (j === step.answer) b.classList.add('is-correct');
+            else if (j === selected) b.classList.add('is-wrong');
         });
-        actionBtn.disabled = false;
-        actionBtn.textContent = 'Завершить';
-        actionBtn.classList.add('teal');
-        actionBtn.onclick = completeLesson;
-        return;
+        if (!ok) showSolution(`Правильно: ${step.options[step.answer]}`);
+        return ok;
+    };
+}
+
+// ---------- Соединить пары ----------
+function renderMatch(step, e) {
+    e.body.innerHTML = promptHtml(step.eyebrow, step.prompt)
+        + `<div class="lesson-match">
+               <div class="lesson-match-col" data-side="kz"></div>
+               <div class="lesson-match-col" data-side="ru"></div>
+           </div>`;
+    const colKz = e.body.querySelector('[data-side="kz"]');
+    const colRu = e.body.querySelector('[data-side="ru"]');
+
+    const makeTile = (text, key, side) => {
+        const b = document.createElement('button');
+        b.type = 'button';
+        b.className = 'lesson-match-tile';
+        b.dataset.key = key;
+        b.dataset.side = side;
+        b.textContent = text;
+        return b;
+    };
+
+    // Ключ плитки — исходный индекс пары, чтобы стороны совпадали после перемешивания.
+    const indexed = step.pairs.map((p, i) => ({ ...p, i }));
+    shuffle(indexed).forEach(p => colKz.appendChild(makeTile(p.kz, String(p.i), 'kz')));
+    shuffle(indexed).forEach(p => colRu.appendChild(makeTile(p.ru, String(p.i), 'ru')));
+
+    let pickedKz = null;
+    let matched = 0;
+    const total = step.pairs.length;
+
+    const clearPick = () => {
+        if (pickedKz) pickedKz.classList.remove('is-picked');
+        pickedKz = null;
+    };
+
+    const onTile = (tile) => {
+        if (tile.classList.contains('is-done')) return;
+        if (tile.dataset.side === 'kz') {
+            clearPick();
+            pickedKz = tile;
+            tile.classList.add('is-picked');
+            return;
+        }
+        // выбрана правая плитка
+        if (!pickedKz) return;
+        if (pickedKz.dataset.key === tile.dataset.key) {
+            pickedKz.classList.remove('is-picked');
+            pickedKz.classList.add('is-done');
+            tile.classList.add('is-done');
+            clearPick();
+            matched++;
+            if (matched === total) {
+                e.screen.classList.add('feedback-ok');
+                setAction(isLastStep() ? 'Завершить' : 'Продолжить', true, 'leaf');
+            }
+        } else {
+            // ошибка — мигаем и теряем сердце
+            const wrong = pickedKz;
+            wrong.classList.add('is-bad');
+            tile.classList.add('is-bad');
+            setTimeout(() => { wrong.classList.remove('is-bad'); tile.classList.remove('is-bad'); }, 450);
+            clearPick();
+            loseHeart();
+        }
+    };
+
+    e.body.querySelectorAll('.lesson-match-tile').forEach(t => t.addEventListener('click', () => onTile(t)));
+    setAction(isLastStep() ? 'Завершить' : 'Продолжить', false);
+}
+
+// ---------- Собрать фразу из слов ----------
+function renderBuild(step, e) {
+    step.__needsCheck = true;
+    e.body.innerHTML = promptHtml(step.eyebrow, step.prompt)
+        + `<div class="lesson-build-ru sticker">${escapeHtml(step.ru)}</div>
+           <div class="lesson-build-line" aria-label="Ваш ответ"></div>
+           <div class="lesson-build-bank"></div>`;
+
+    const line = e.body.querySelector('.lesson-build-line');
+    const bank = e.body.querySelector('.lesson-build-bank');
+
+    const pool = shuffle([...step.tokens, ...(step.distractors || [])]);
+
+    const refresh = () => {
+        const has = line.querySelector('.lesson-tile');
+        setAction('Проверить', !!has && !validated);
+    };
+
+    const makeTile = (text, home) => {
+        const t = document.createElement('button');
+        t.type = 'button';
+        t.className = 'lesson-tile';
+        t.textContent = text;
+        t.addEventListener('click', () => {
+            if (validated) return;
+            if (t.parentElement === bank) line.appendChild(t);
+            else bank.appendChild(t);
+            refresh();
+        });
+        home.appendChild(t);
+    };
+
+    pool.forEach(tok => makeTile(tok, bank));
+    setAction('Проверить', false);
+
+    checkFn = () => {
+        const answer = Array.from(line.querySelectorAll('.lesson-tile')).map(t => t.textContent);
+        const ok = answer.join(' ') === step.tokens.join(' ');
+        line.classList.add(ok ? 'is-correct' : 'is-wrong');
+        line.querySelectorAll('.lesson-tile').forEach(t => t.disabled = true);
+        bank.querySelectorAll('.lesson-tile').forEach(t => t.disabled = true);
+        if (!ok) showSolution(`Правильно: ${step.tokens.join(' ')}`);
+        return ok;
+    };
+}
+
+// ---------- Итоговые слова ----------
+function renderWords(step, e) {
+    const lesson = lessonsData[lessonIdx];
+    const words = (lesson.wordIds || []).map(getWord).filter(Boolean);
+    e.body.innerHTML = promptHtml(step.eyebrow, step.title || lesson.title)
+        + `<div class="lesson-words sticker">${words.map(w => `
+            <div class="lesson-word">
+                <div class="lesson-word-kz">${escapeHtml(w.kz)}</div>
+                <div class="lesson-word-ru">${escapeHtml(w.ru)}</div>
+                ${w.phonetic ? `<div class="lesson-word-phonetic">${escapeHtml(w.phonetic)}</div>` : ''}
+            </div>`).join('')}</div>`;
+    setAction(isLastStep() ? 'Завершить' : 'Продолжить', true, 'teal');
+}
+
+// --- Общие действия ---
+function showSolution(text) {
+    const e = els();
+    if (!e) return;
+    e.solution.textContent = text;
+    e.solution.hidden = false;
+}
+
+function loseHeart() {
+    hearts = Math.max(0, hearts - 1);
+    updateHearts();
+}
+
+function onAction() {
+    const step = steps[stepNo];
+    if (step && step.__needsCheck && !validated) {
+        validated = true;
+        const ok = checkFn ? checkFn() : true;
+        const e = els();
+        if (e) e.screen.classList.add(ok ? 'feedback-ok' : 'feedback-bad');
+        if (!ok) loseHeart();
+        setAction(isLastStep() ? 'Завершить' : 'Продолжить', true, ok ? 'leaf' : 'coral');
+    } else {
+        advance();
     }
 }
 
-function advanceStep() {
-    if (currentStep < TOTAL_STEPS - 1) {
-        currentStep++;
-        renderLessonStep();
+function advance() {
+    if (stepNo < steps.length - 1) {
+        stepNo++;
+        renderStep();
     } else {
         completeLesson();
     }
 }
 
 async function completeLesson() {
-    const lesson = lessonsData[currentLessonIdx];
+    const lesson = lessonsData[lessonIdx];
     const wordIds = lesson.wordIds ?? [];
 
-    // Зачисляем слова в SRS
+    // Зачисляем слова в SRS и обновляем очередь карточек.
     enrollWords(wordIds, lesson.id);
     syncFlashcardsShim();
-
-    // Обновляем приоритеты очереди
     markLessonCompleted(lesson.id);
     setRecentLessonIds(getRecentLessonIds(3));
-
-    // Синк на сервер
     await postEnroll(wordIds, lesson.id).catch(() => {});
 
-    // Обновляем прогресс уроков
-    lessonsProgress[currentLessonIdx] = true;
-    if (currentLessonIdx + 1 < lessonsProgress.length && lessonsProgress[currentLessonIdx + 1] === false) {
-        lessonsProgress[currentLessonIdx + 1] = null;
+    // Прогресс уроков: текущий пройден, следующий разблокирован.
+    lessonsProgress[lessonIdx] = true;
+    if (lessonIdx + 1 < lessonsProgress.length && lessonsProgress[lessonIdx + 1] === false) {
+        lessonsProgress[lessonIdx + 1] = null;
     }
 
     recordActivity();

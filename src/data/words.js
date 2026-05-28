@@ -187,6 +187,19 @@ export const WORDS = {
         difficulty: 1
     },
 
+    // ===== Приветствие и вежливость (A1) =====
+    'greet_salemetsiz': { id: 'greet_salemetsiz', kz: 'Сәлеметсіз бе', ru: 'Здравствуйте', phonetic: '[sælemetsiz be]', audioUrl: null, tags: ['greeting', 'basic'], difficulty: 2 },
+    'greet_rahmet':     { id: 'greet_rahmet',     kz: 'Рахмет',       ru: 'Спасибо',     phonetic: '[raqmet]',       audioUrl: null, tags: ['greeting', 'basic'], difficulty: 1 },
+    'greet_morning':    { id: 'greet_morning',    kz: 'Қайырлы таң',  ru: 'Доброе утро', phonetic: '[qajyrly tañ]',  audioUrl: null, tags: ['greeting', 'basic'], difficulty: 2 },
+    'common_yes':       { id: 'common_yes',       kz: 'Иә',           ru: 'Да',          phonetic: '[ijæ]',          audioUrl: null, tags: ['basic'],             difficulty: 1 },
+    'common_no':        { id: 'common_no',        kz: 'Жоқ',          ru: 'Нет',         phonetic: '[joq]',          audioUrl: null, tags: ['basic'],             difficulty: 1 },
+
+    // ===== Семья — расширение (A1) =====
+    'family_aga':  { id: 'family_aga',  kz: 'Аға',  ru: 'Старший брат',   phonetic: '[ağa]',  audioUrl: null, tags: ['family'], difficulty: 2 },
+    'family_apke': { id: 'family_apke', kz: 'Әпке', ru: 'Старшая сестра', phonetic: '[æpke]', audioUrl: null, tags: ['family'], difficulty: 2 },
+    'family_ata':  { id: 'family_ata',  kz: 'Ата',  ru: 'Дедушка',        phonetic: '[ata]',  audioUrl: null, tags: ['family'], difficulty: 2 },
+    'family_aje':  { id: 'family_aje',  kz: 'Әже',  ru: 'Бабушка',        phonetic: '[æje]',  audioUrl: null, tags: ['family'], difficulty: 2 },
+
     // ===== Числа 1-10 (A1) =====
     'num_one':   { id: 'num_one',   kz: 'Бір',   ru: 'Один',   phonetic: '[bir]',    audioUrl: null, tags: ['numbers'], difficulty: 1 },
     'num_two':   { id: 'num_two',   kz: 'Екі',   ru: 'Два',    phonetic: '[eki]',    audioUrl: null, tags: ['numbers'], difficulty: 1 },

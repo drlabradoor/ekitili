@@ -6,17 +6,7 @@ const COLORS = {
     right: { helmet: '#dc2626', armor: '#ef4444', shield: '#b91c1c', accent: '#f87171' }
 };
 
-/**
- * Создать SVG-аватара батыра
- * @param {Object} opts
- * @param {'left'|'right'} opts.side
- * @param {string} opts.username
- * @param {number} opts.hp
- * @param {number} opts.maxHp
- * @param {number} opts.specialCharges
- * @returns {string} HTML-строка
- */
-export function createBatyrSVG({ side = 'left', username = '', hp = 100, maxHp = 100, specialCharges = 3 }) {
+export function createBatyrSVG({ side = 'left', username = '', hp = 100, maxHp = 100 }) {
     const c = COLORS[side];
     const flip = side === 'right' ? 'transform="scale(-1,1) translate(-120,0)"' : '';
     const hpPercent = Math.max(0, Math.min(100, (hp / maxHp) * 100));
@@ -62,39 +52,6 @@ export function createBatyrSVG({ side = 'left', username = '', hp = 100, maxHp =
         </div>
         <div class="batyr-hp-text">${hp} / ${maxHp}</div>
     </div>`;
-}
-
-/**
- * Рендер панели спецприёмов — отдельный блок для нижней зоны арены
- */
-export function renderSpecialsPanel(charges) {
-    const icons = [
-        { key: 'shield', label: 'Щит', svg: shieldIcon() },
-        { key: 'frost', label: 'Мороз', svg: frostIcon() },
-        { key: 'double', label: '2x Удар', svg: doubleIcon() }
-    ];
-    return `<div class="specials-panel">
-        ${icons.map((icon, i) => `
-            <button class="special-btn${i < charges ? '' : ' special-btn--used'}"
-                    data-special="${icon.key}"
-                    ${i >= charges ? 'disabled' : ''}>
-                <span class="special-btn-icon">${icon.svg}</span>
-                <span class="special-btn-label">${icon.label}</span>
-            </button>
-        `).join('')}
-    </div>`;
-}
-
-function shieldIcon() {
-    return `<svg viewBox="0 0 24 24" width="20" height="20"><path d="M12 2L4 6v6c0 5.5 3.4 10.7 8 12 4.6-1.3 8-6.5 8-12V6l-8-4z" fill="#3b82f6"/></svg>`;
-}
-
-function frostIcon() {
-    return `<svg viewBox="0 0 24 24" width="20" height="20"><path d="M12 2v20M2 12h20M5.6 5.6l12.8 12.8M18.4 5.6L5.6 18.4" stroke="#38bdf8" stroke-width="2" fill="none"/></svg>`;
-}
-
-function doubleIcon() {
-    return `<svg viewBox="0 0 24 24" width="20" height="20"><path d="M7 4l10 8-10 8V4z" fill="#f59e0b"/><path d="M13 4l10 8-10 8V4z" fill="#f59e0b" opacity="0.5"/></svg>`;
 }
 
 /**

@@ -2690,54 +2690,6 @@ body.lesson-open .app-header { display: none !important; }
     font-weight: 600;
 }
 
-/* --- Панель спецприёмов (нижняя зона арены) --- */
-.arena-specials {
-    flex-shrink: 0;
-    padding: 4px 0;
-}
-.specials-panel {
-    display: flex;
-    justify-content: center;
-    gap: 10px;
-}
-.special-btn {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 3px;
-    min-width: 64px;
-    padding: 10px 12px;
-    border: 2px solid #cbd5e1;
-    border-radius: 12px;
-    background: white;
-    cursor: pointer;
-    transition: transform 0.15s, border-color 0.15s, box-shadow 0.15s;
-    -webkit-tap-highlight-color: transparent;
-    touch-action: manipulation;
-}
-.special-btn:active:not(:disabled) {
-    transform: scale(0.93);
-    border-color: #2563eb;
-    box-shadow: 0 0 0 3px rgba(37,99,235,0.15);
-}
-.special-btn--used {
-    opacity: 0.3;
-    cursor: default;
-    border-color: #e2e8f0;
-}
-.special-btn-icon {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-.special-btn-icon svg { width: 24px; height: 24px; }
-.special-btn-label {
-    font-size: 0.65rem;
-    font-weight: 600;
-    color: #64748b;
-    white-space: nowrap;
-}
-
 /* Анимации батыра */
 .batyr--hit {
     animation: batyrHit 0.4s ease;
@@ -3798,6 +3750,143 @@ body.lesson-open .app-header { display: none !important; }
     box-shadow: 0 4px 0 var(--teal-deep) !important;
 }
 
+/* Soft inline note inside theory cards */
+.lesson-theory .t-soft { color: var(--ink-soft); font-weight: 500; font-size: 0.92em; }
+
+/* Hearts low warning */
+.lesson-hearts.is-low { animation: heartPulse 0.9s ease-in-out infinite; }
+@keyframes heartPulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.45; } }
+
+/* Selected (pre-check) state for choice options */
+.lesson-option.is-selected {
+    border-color: var(--secondary-deep);
+    box-shadow: 0 4px 0 var(--secondary-deep);
+    background: #fff6e0;
+}
+
+/* Solution banner (shown on a wrong answer) */
+.lesson-solution {
+    margin: 0 auto 12px;
+    max-width: 420px;
+    padding: 10px 14px;
+    border-radius: var(--r-md);
+    background: #fdebe6;
+    border: 2px solid var(--coral-deep);
+    color: var(--coral-deep);
+    font-family: 'Fredoka', 'Manrope', sans-serif;
+    font-weight: 600;
+    font-size: 14px;
+    text-align: center;
+}
+
+/* ---------- Match pairs ---------- */
+.lesson-match {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+}
+.lesson-match-col {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+.lesson-match-tile {
+    padding: 14px 12px;
+    border-radius: 14px;
+    background: var(--cream);
+    border: 2.5px solid var(--cream-3);
+    box-shadow: 0 4px 0 var(--cream-3);
+    cursor: pointer;
+    font-family: 'Fredoka', 'Manrope', sans-serif;
+    font-weight: 600;
+    font-size: 16px;
+    color: var(--secondary-deep);
+    transition: transform 0.06s, box-shadow 0.06s, border-color 0.15s, background 0.15s, opacity 0.2s;
+}
+.lesson-match-tile:hover:not(.is-done) {
+    border-color: var(--secondary-deep);
+    box-shadow: 0 4px 0 var(--secondary-deep);
+}
+.lesson-match-tile.is-picked {
+    border-color: var(--secondary-deep);
+    box-shadow: 0 4px 0 var(--secondary-deep);
+    background: #fff6e0;
+    transform: translateY(1px);
+}
+.lesson-match-tile.is-done {
+    background: #eaefd9;
+    border-color: var(--leaf-deep);
+    box-shadow: none;
+    color: var(--leaf-deep);
+    opacity: 0.55;
+    cursor: default;
+}
+.lesson-match-tile.is-bad {
+    background: #fdebe6;
+    border-color: var(--coral-deep);
+    box-shadow: 0 4px 0 var(--coral-deep);
+    color: var(--coral-deep);
+    animation: matchShake 0.4s;
+}
+@keyframes matchShake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-4px); }
+    75% { transform: translateX(4px); }
+}
+
+/* ---------- Build a sentence ---------- */
+.lesson-build-ru.sticker {
+    padding: 14px 16px;
+    margin-bottom: 16px;
+    background: var(--cream);
+    font-family: 'Manrope', sans-serif;
+    font-weight: 600;
+    font-size: 17px;
+    color: var(--ink);
+    text-align: center;
+}
+.lesson-build-line {
+    min-height: 58px;
+    display: flex;
+    flex-wrap: wrap;
+    align-content: flex-start;
+    gap: 8px;
+    padding: 10px;
+    margin-bottom: 18px;
+    border-radius: 14px;
+    border: 2px dashed rgba(122, 74, 28, 0.4);
+    background: rgba(255, 255, 255, 0.4);
+    transition: border-color 0.2s, background 0.2s;
+}
+.lesson-build-line.is-correct { border-style: solid; border-color: var(--leaf-deep); background: #eaefd9; }
+.lesson-build-line.is-wrong   { border-style: solid; border-color: var(--coral-deep); background: #fdebe6; }
+.lesson-build-bank {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    justify-content: center;
+}
+.lesson-tile {
+    padding: 10px 16px;
+    border-radius: 12px;
+    background: var(--cream);
+    border: 2.5px solid var(--cream-3);
+    box-shadow: 0 4px 0 var(--cream-3);
+    cursor: pointer;
+    font-family: 'Fredoka', 'Manrope', sans-serif;
+    font-weight: 600;
+    font-size: 16px;
+    color: var(--secondary-deep);
+    transition: transform 0.06s, box-shadow 0.06s, border-color 0.15s;
+    height: fit-content;
+}
+.lesson-tile:hover:not(:disabled) {
+    border-color: var(--secondary-deep);
+    box-shadow: 0 4px 0 var(--secondary-deep);
+}
+.lesson-tile:active:not(:disabled) { transform: translateY(2px); box-shadow: 0 2px 0 var(--secondary-deep); }
+.lesson-tile:disabled { cursor: default; opacity: 0.85; }
+
 /* Mobile tweaks */
 @media (max-width: 520px) {
     .lesson-options { grid-template-columns: 1fr; }
@@ -4627,7 +4716,7 @@ body.lesson-open .app-header { display: none !important; }
 /* ---- Arena ---- */
 #tab-games .battle-arena {
     padding: 0 0 40px;
-    background: linear-gradient(180deg, #f6eecf 0%, #efe2bf 100%);
+    background: var(--page);
     min-height: 70vh;
 }
 #tab-games .arena-top {
@@ -4693,48 +4782,54 @@ body.lesson-open .app-header { display: none !important; }
     transition: background 0.18s, color 0.18s;
 }
 #tab-games .arena-turn-info.turn-info--correct {
-    background: var(--leaf);
-    color: var(--cream);
-    border-color: var(--leaf-deep);
+    background: #fff;
+    color: var(--leaf-deep);
+    border-color: var(--leaf);
+    box-shadow: 0 2px 0 var(--leaf);
+    font-weight: 700;
 }
 #tab-games .arena-turn-info.turn-info--wrong {
     background: var(--coral);
-    color: var(--cream);
+    color: #fff;
     border-color: var(--coral-deep);
+    text-shadow: 0 1px 2px rgba(0,0,0,0.35);
+    font-weight: 700;
 }
 
 /* Attack: three cards in hand */
 #tab-games .attack-cards {
     display: flex;
-    gap: 10px;
+    gap: 14px;
     justify-content: center;
+    padding: 0 8px;
 }
 #tab-games .attack-card {
     background: var(--cream);
     border: 2.5px solid var(--secondary-deep);
-    border-radius: 14px;
-    box-shadow: 0 4px 0 var(--secondary-deep);
-    width: 96px;
-    padding: 10px 8px;
+    border-radius: 18px;
+    box-shadow: 0 5px 0 var(--secondary-deep);
+    flex: 1 1 0;
+    max-width: 140px;
+    padding: 16px 10px 14px;
     text-align: center;
     cursor: pointer;
     transition: transform 0.06s, box-shadow 0.06s;
     animation: card-arrive 0.4s ease-out;
 }
-#tab-games .attack-card:hover { transform: translateY(-2px); box-shadow: 0 6px 0 var(--secondary-deep); }
+#tab-games .attack-card:hover { transform: translateY(-3px); box-shadow: 0 8px 0 var(--secondary-deep); }
 #tab-games .attack-card:active {
-    transform: translateY(3px);
+    transform: translateY(4px);
     box-shadow: 0 1px 0 var(--secondary-deep);
 }
 #tab-games .attack-card-svg {
-    width: 60px;
-    height: 60px;
-    margin: 0 auto 6px;
+    width: 70px;
+    height: 70px;
+    margin: 0 auto 10px;
 }
 #tab-games .attack-card-word {
     font-family: 'Fredoka', 'Manrope', sans-serif;
     font-weight: 700;
-    font-size: 14px;
+    font-size: 15px;
     color: var(--secondary-deep);
 }
 
@@ -4855,44 +4950,6 @@ body.lesson-open .app-header { display: none !important; }
     font-family: 'Fredoka', 'Manrope', sans-serif;
     font-weight: 600;
     font-size: 11px;
-}
-
-/* Specials panel */
-#tab-games .arena-specials {
-    display: flex;
-    justify-content: center;
-    gap: 10px;
-    padding: 8px 18px 16px;
-}
-#tab-games .special-btn {
-    width: 56px;
-    height: 56px;
-    background: var(--cream);
-    border: 2.5px solid var(--secondary-deep);
-    border-radius: 14px;
-    box-shadow: 0 3px 0 var(--secondary-deep);
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    color: var(--secondary-deep);
-}
-#tab-games .special-btn:active:not(:disabled) {
-    transform: translateY(2px);
-    box-shadow: 0 1px 0 var(--secondary-deep);
-}
-#tab-games .special-btn--used {
-    opacity: 0.4;
-    cursor: not-allowed;
-}
-#tab-games .special-btn-icon { font-size: 22px; }
-#tab-games .special-btn-icon svg { width: 24px; height: 24px; }
-#tab-games .special-btn-label {
-    font-family: 'Fredoka', 'Manrope', sans-serif;
-    font-size: 9px;
-    margin-top: 2px;
-    letter-spacing: 0.04em;
 }
 
 /* ---- Result screen ---- */
@@ -5424,7 +5481,7 @@ body.lesson-open .app-header { display: none !important; }
 
 /* ---- Stats section ---- */
 #tab-profile .stats-section {
-    margin: 0;
+    margin: 0 auto;
     padding: 16px 14px 30px;
     background: var(--page);
     border-radius: 0;
@@ -5432,6 +5489,9 @@ body.lesson-open .app-header { display: none !important; }
     display: flex;
     flex-direction: column;
     gap: 14px;
+    width: 100%;
+    max-width: 560px;
+    align-self: center;
 }
 
 /* Stats row: circle + streak */

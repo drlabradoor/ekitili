@@ -1,5 +1,5 @@
 // Рендерер экранов батла: лобби, арена, результат
-import { createBatyrSVG, updateBatyrHP, renderSpecialsPanel } from './batyrAvatar.js';
+import { createBatyrSVG, updateBatyrHP } from './batyrAvatar.js';
 
 // =====================================================
 // SVG-фигуры для карточек (плоский дизайн)
@@ -37,7 +37,7 @@ export function renderLobby(container, username) {
             <div class="battle-title">Батыр Батл</div>
             <div class="battle-subtitle">Онлайн-дуэль на знание казахского</div>
             <div class="lobby-avatar-preview">
-                ${createBatyrSVG({ side: 'left', username: username || 'Ты', hp: 100, maxHp: 100, specialCharges: 3 })}
+                ${createBatyrSVG({ side: 'left', username: username || 'Ты', hp: 100, maxHp: 100 })}
             </div>
             <button class="battle-find-btn" id="battle-find-btn">
                 <i class="fas fa-search"></i> Найти соперника
@@ -84,8 +84,7 @@ export function renderArena(container, state) {
                         side: 'left',
                         username: playerSide === 'left' ? player.username : opponent.username,
                         hp: playerSide === 'left' ? player.hp : opponent.hp,
-                        maxHp: 100,
-                        specialCharges: playerSide === 'left' ? player.specialCharges : opponent.specialCharges
+                        maxHp: 100
                     })}
                 </div>
                 <div class="arena-vs">VS</div>
@@ -94,8 +93,7 @@ export function renderArena(container, state) {
                         side: 'right',
                         username: playerSide === 'right' ? player.username : opponent.username,
                         hp: playerSide === 'right' ? player.hp : opponent.hp,
-                        maxHp: 100,
-                        specialCharges: playerSide === 'right' ? player.specialCharges : opponent.specialCharges
+                        maxHp: 100
                     })}
                 </div>
             </div>
@@ -104,9 +102,6 @@ export function renderArena(container, state) {
                 <div class="arena-action-area" id="arena-action-area"></div>
             </div>
             <div class="arena-combo-bar" id="arena-combo-bar"></div>
-            <div class="arena-specials" id="arena-specials">
-                ${renderSpecialsPanel(player.specialCharges)}
-            </div>
         </div>`;
 }
 
@@ -116,6 +111,9 @@ export function renderArena(container, state) {
 export function renderAttackPhase(actionArea, hand, turnInfo) {
     turnInfo.textContent = 'Твой ход! Выбери карту для атаки:';
     actionArea.innerHTML = `
+        <div class="defend-timer" style="margin-bottom:18px;">
+            <div class="defend-timer-bar" id="defend-timer-bar"></div>
+        </div>
         <div class="attack-cards">
             ${hand.map((card, i) => `
                 <div class="attack-card" data-index="${i}">
