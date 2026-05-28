@@ -7,7 +7,7 @@ import { showLesson } from './lessons.js';
 const PATH_W = 360;
 const NODE_SPACING = 110;
 const PATH_AMP = PATH_W * 0.28;
-const PAD_TOP = 70;
+const PAD_TOP = 120;
 const PAD_BOTTOM = 120;
 
 function nodePos(i) {

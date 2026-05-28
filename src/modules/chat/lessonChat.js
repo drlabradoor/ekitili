@@ -29,7 +29,7 @@ export function mountLessonChat(initialLesson) {
     root.className = 'lesson-chat';
     root.innerHTML = `
         <button type="button" class="lesson-chat-fab" aria-label="ИИ-помощник">
-            <span class="lesson-chat-fab-icon" aria-hidden="true">🤖</span>
+            <img src="assets/images/horse_happy.png" alt="" class="lesson-chat-fab-icon" aria-hidden="true">
         </button>
         <div class="lesson-chat-panel" hidden>
             <div class="lesson-chat-head">
