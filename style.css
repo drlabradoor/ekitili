@@ -5154,12 +5154,12 @@ body.lesson-open .app-header { display: none !important; }
     border-bottom: 3px solid var(--secondary-deep);
     box-shadow: 0 4px 0 rgba(122,74,28,0.18);
     font-family: 'Fredoka', 'Manrope', sans-serif;
-    font-weight: 600;
-    font-size: 22px;
+    font-weight: 700;
+    font-size: 24px;
     letter-spacing: 0.02em;
     text-align: center;
-    padding: 14px 22px;
-    margin: 0 0 18px;
+    padding: 18px 22px 16px;
+    margin: 0 0 24px;
     -webkit-text-fill-color: currentColor;
     -webkit-background-clip: border-box;
     background-clip: border-box;
@@ -5167,7 +5167,7 @@ body.lesson-open .app-header { display: none !important; }
 #tab-leaderboard .leaderboard-label::before { content: '🏆 '; }
 
 #tab-leaderboard .leaderboard-block {
-    margin: 0 14px 18px;
+    margin: 0 14px 28px;
     padding: 0;
     background: transparent;
     border-radius: 0;
@@ -5175,14 +5175,14 @@ body.lesson-open .app-header { display: none !important; }
 }
 #tab-leaderboard .leaderboard-title {
     font-family: 'Fredoka', 'Manrope', sans-serif;
-    font-weight: 500;
-    font-size: 11px;
-    letter-spacing: 0.18em;
+    font-weight: 600;
+    font-size: 13px;
+    letter-spacing: 0.12em;
     text-transform: uppercase;
     color: var(--secondary-deep);
-    opacity: 0.75;
+    opacity: 0.85;
     text-align: center;
-    margin: 0 0 10px;
+    margin: 0 0 16px;
 }
 
 #tab-leaderboard .leaderboard-list--podium {
@@ -5195,8 +5195,8 @@ body.lesson-open .app-header { display: none !important; }
     display: flex;
     align-items: flex-end;
     justify-content: center;
-    gap: 10px;
-    padding: 20px 14px 4px;
+    gap: 8px;
+    padding: 14px 12px 8px;
 }
 .podium-place {
     flex: 1;
@@ -5273,8 +5273,8 @@ body.lesson-open .app-header { display: none !important; }
 .leaderboard-rest {
     display: flex;
     flex-direction: column;
-    gap: 6px;
-    padding: 14px 14px 0;
+    gap: 8px;
+    padding: 12px 14px 0;
 }
 #tab-leaderboard .leaderboard-item {
     display: flex;
@@ -5330,16 +5330,18 @@ body.lesson-open .app-header { display: none !important; }
 
 #tab-leaderboard .leaderboard-empty {
     text-align: center;
-    padding: 30px 16px;
+    padding: 40px 16px;
     color: var(--ink-soft);
+    font-family: 'Manrope', system-ui, sans-serif;
+    font-size: 15px;
+    line-height: 1.5;
     font-style: italic;
-    font-size: 14px;
 }
 
 /* ---- "You" card pinned at the bottom of the tab ---- */
 #tab-leaderboard .leaderboard-user {
-    margin: 12px 14px 4px;
-    padding: 12px 14px;
+    margin: 24px 14px 8px;
+    padding: 14px 16px;
     background: var(--secondary);
     color: var(--cream);
     border: 2.5px solid var(--secondary-deep);
@@ -5347,7 +5349,7 @@ body.lesson-open .app-header { display: none !important; }
     box-shadow: 0 4px 0 var(--secondary-deep);
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 16px;
 }
 #tab-leaderboard .leaderboard-user-label {
     flex: 1;
