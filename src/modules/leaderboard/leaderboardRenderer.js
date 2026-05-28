@@ -1,10 +1,32 @@
 // Рендеринг лидерборда
 // Дизайн-референс: design-handoff/project/screens_board.jsx
 // Top-3 идут на подиум, остальные — chunky-список ниже.
+// Если игрок === текущий пользователь, показываем его кастомный батыр-аватар
+// (portrait/stage/gear из userProfile). У остальных — дефолтный конь.
 import { createBatyrAvatarEl } from '../profile/batyrAvatarProfile.js';
 import { userProfile } from '../../data/user.js';
+import { getCurrentUser } from '../../services/auth.js';
 
 const MEDALS = ['🥇', '🥈', '🥉'];
+
+function isCurrentUser(playerName) {
+    const cur = getCurrentUser();
+    if (!cur || !cur.username || !playerName) return false;
+    return String(playerName).toLowerCase() === String(cur.username).toLowerCase();
+}
+
+function avatarFor(player, size) {
+    if (isCurrentUser(player.name)) {
+        return createBatyrAvatarEl(
+            size,
+            userProfile.stage || 0,
+            userProfile.gear || {},
+            userProfile.portrait || 'horse',
+            'mini'
+        );
+    }
+    return createBatyrAvatarEl(size, 0, {}, 'horse', 'mini');
+}
 
 export function renderLeaderboard(list, containerId) {
     const container = document.getElementById(containerId);
@@ -31,25 +53,16 @@ export function renderLeaderboard(list, containerId) {
             const player = top3[idx];
             const place = idx + 1;
             const isFirst = place === 1;
-            const podiumPlace = document.createElement('div');
-            podiumPlace.className = `podium-place podium-place--${place}`;
+            const isMe = isCurrentUser(player.name);
 
-            // Создаём батыр-аватар с дефолтным конём (без gear)
+            const podiumPlace = document.createElement('div');
+            podiumPlace.className = `podium-place podium-place--${place}${isMe ? ' is-me' : ''}`;
+
             const avatarWrap = document.createElement('div');
             avatarWrap.className = 'podium-avatar-wrap';
-            const batyrEl = createBatyrAvatarEl(
-                isFirst ? 68 : 54,  // size: bigger for 1st place
-                0,  // stage: no progression ring
-                {},  // gear: empty (no equipment)
-                'horse',  // portrait: default horse
-                'mini'  // kind
-            );
+            const batyrEl = avatarFor(player, isFirst ? 68 : 54);
+            avatarWrap.appendChild(batyrEl);
 
-            // Убераем обёртку батыра и вставляем его тело напрямую
-            const batyrContent = batyrEl.innerHTML;
-            avatarWrap.innerHTML = batyrEl.innerHTML;
-
-            // Добавляем медаль поверх
             const medal = document.createElement('div');
             medal.className = 'podium-medal';
             medal.setAttribute('aria-hidden', 'true');
@@ -73,14 +86,20 @@ export function renderLeaderboard(list, containerId) {
         restList.className = 'leaderboard-rest';
         rest.forEach((player, i) => {
             const place = i + 4;
+            const isMe = isCurrentUser(player.name);
             const row = document.createElement('div');
-            row.className = 'leaderboard-item';
+            row.className = 'leaderboard-item' + (isMe ? ' is-me' : '');
+
+            const avatarSlot = document.createElement('div');
+            avatarSlot.className = 'leaderboard-avatar';
+            avatarSlot.appendChild(avatarFor(player, 36));
+
             row.innerHTML = `
                 <div class="leaderboard-place">#${place}</div>
-                <div class="leaderboard-avatar">${escapeHtml((player.name || '?')[0].toUpperCase())}</div>
                 <div class="leaderboard-name">${escapeHtml(player.name || '')}</div>
                 <div class="leaderboard-points">${player.points ?? 0} ★</div>
             `;
+            row.insertBefore(avatarSlot, row.children[1]);
             restList.appendChild(row);
         });
         container.appendChild(restList);
@@ -99,24 +118,20 @@ export function renderUserAvatarInLeaderboard() {
     const userCard = document.getElementById('leaderboardUser');
     if (!userCard) return;
 
-    // Удаляем старый аватар если уже есть
     const existingAvatar = userCard.querySelector('.leaderboard-user-avatar-wrap');
     if (existingAvatar) existingAvatar.remove();
 
-    // Создаём обёртку для аватара в начало карточки
     const avatarWrap = document.createElement('div');
     avatarWrap.className = 'leaderboard-user-avatar-wrap';
 
-    // Вставляем батыр-аватар с текущими настройками
     const batyrEl = createBatyrAvatarEl(
-        44,  // size
+        44,
         userProfile.stage || 0,
         userProfile.gear || {},
         userProfile.portrait || 'horse',
-        'mini'  // kind
+        'mini'
     );
     avatarWrap.appendChild(batyrEl);
 
-    // Вставляем в начало карточки, перед текстом
     userCard.insertBefore(avatarWrap, userCard.firstChild);
 }

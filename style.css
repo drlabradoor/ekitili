@@ -5145,7 +5145,7 @@ body.lesson-open .app-header { display: none !important; }
     border-radius: 0;
     box-shadow: none;
     margin: 0;
-    padding: 0 0 14px;
+    padding: 24px 0 14px;
 }
 #tab-leaderboard .leaderboard-label {
     display: block;
@@ -5283,19 +5283,29 @@ body.lesson-open .app-header { display: none !important; }
     flex-shrink: 0;
 }
 #tab-leaderboard .leaderboard-avatar {
-    width: 36px;
-    height: 36px;
+    width: 40px;
+    height: 40px;
     border-radius: 50%;
-    background: var(--secondary);
-    color: var(--cream);
-    font-family: 'Fredoka', 'Manrope', sans-serif;
-    font-weight: 700;
-    font-size: 15px;
-    border: 2px solid var(--secondary-deep);
+    background: transparent;
+    border: none;
     display: flex;
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
+    padding: 0;
+}
+#tab-leaderboard .leaderboard-item.is-me {
+    background: #fdf3da;
+    border-color: var(--secondary);
+    box-shadow: 0 3px 0 var(--secondary);
+}
+#tab-leaderboard .leaderboard-item.is-me .leaderboard-name,
+#tab-leaderboard .leaderboard-item.is-me .leaderboard-points {
+    color: var(--secondary-deep);
+}
+.podium-place.is-me .podium-name {
+    color: var(--secondary-deep);
+    font-weight: 700;
 }
 #tab-leaderboard .leaderboard-name {
     flex: 1;
