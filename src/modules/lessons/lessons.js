@@ -11,6 +11,7 @@ import { renderStats } from '../profile/profileRenderer.js';
 import { recordActivity } from '../../services/streak.js';
 import { postEnroll } from '../../services/srsSync.js';
 import { getWord } from '../../data/words.js';
+import { mountLessonChat, unmountLessonChat, updateLessonContext } from '../chat/lessonChat.js';
 
 const HEARTS_FULL = 5;
 const LETTERS = ['A', 'B', 'C', 'D', 'E', 'F'];
@@ -86,6 +87,7 @@ export function showLesson(idx) {
     const lessonsPath = document.querySelector('#tab-lessons .lessons-path');
     if (lessonsPath) lessonsPath.style.display = 'none';
 
+    mountLessonChat({ title: lesson.title, subtitle: lesson.subtitle, step: steps[0] });
     renderStep();
 }
 
@@ -138,6 +140,11 @@ function renderStep() {
     e.solution.innerHTML = '';
     e.fill.style.width = `${(stepNo / steps.length) * 100}%`;
     updateHearts();
+
+    const currentLesson = lessonsData[lessonIdx];
+    if (currentLesson) {
+        updateLessonContext({ title: currentLesson.title, subtitle: currentLesson.subtitle, step });
+    }
 
     switch (step.type) {
         case 'theory': return renderTheory(step, e);
@@ -396,4 +403,5 @@ export function closeLessonPage() {
     const lessonsPath = document.querySelector('#tab-lessons .lessons-path');
     if (lessonsPath) lessonsPath.style.display = 'flex';
     document.body.classList.remove('lesson-open');
+    unmountLessonChat();
 }

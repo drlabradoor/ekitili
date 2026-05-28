@@ -790,6 +790,113 @@ app.post('/api/user/words/bulk', requireAuth, async (req, res, next) => {
     }
 });
 
+// =====================================================
+// API: ИИ-помощник по уроку (Groq · Llama)
+// Прокси: ключ Groq живёт только на сервере, клиент к нему не обращается.
+// =====================================================
+const GROQ_API_KEY = process.env.GROQ_API_KEY;
+const GROQ_MODEL = process.env.GROQ_MODEL || 'llama-3.3-70b-versatile';
+const GROQ_URL = 'https://api.groq.com/openai/v1/chat/completions';
+
+const chatLimiter = rateLimit({
+    windowMs: 60 * 1000,
+    max: 20,
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: { error: 'Слишком много запросов к ИИ. Попробуйте через минуту.' }
+});
+
+function stripHtml(s) {
+    return String(s || '').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+}
+
+function buildLessonSystemPrompt(lesson) {
+    const lines = [
+        'Ты — дружелюбный ИИ-помощник в приложении EkiTili для изучения казахского языка.',
+        'Отвечай по-русски, тепло и кратко (1–3 предложения).',
+        'Помогай по текущему шагу урока: объясняй слова, перевод, произношение, простую грамматику.',
+        'Если просят прямой ответ на тестовое задание — не выдавай его напрямую, дай подсказку.',
+        'Если вопрос не по уроку — мягко верни к уроку, но коротко ответь.'
+    ];
+    if (lesson && lesson.title) {
+        const sub = lesson.subtitle ? ` (${lesson.subtitle})` : '';
+        lines.push(`Текущий урок: «${lesson.title}»${sub}.`);
+    }
+    const s = lesson && lesson.step;
+    if (s && s.type) {
+        if (s.type === 'theory') {
+            const t = stripHtml(s.html).slice(0, 500);
+            lines.push(`Шаг теории «${s.title || ''}». Содержание: ${t}`);
+        } else if (s.type === 'choice') {
+            const opts = Array.isArray(s.options) ? s.options.join(' / ') : '';
+            lines.push(`Шаг выбора. Вопрос: «${s.question || ''}». Варианты: ${opts}.`);
+        } else if (s.type === 'match' && Array.isArray(s.pairs)) {
+            const pairs = s.pairs.map(p => `${p.kz}↔${p.ru}`).join(', ');
+            lines.push(`Шаг соединения пар: ${pairs}.`);
+        } else if (s.type === 'build') {
+            const toks = Array.isArray(s.tokens) ? s.tokens.join(' ') : '';
+            lines.push(`Шаг сборки фразы. Перевод: «${s.ru || ''}». Правильный порядок: ${toks}.`);
+        } else if (s.type === 'words') {
+            lines.push('Финальный шаг урока — список новых слов.');
+        }
+    }
+    return lines.join('\n');
+}
+
+app.post('/api/chat', chatLimiter, async (req, res) => {
+    if (!GROQ_API_KEY) {
+        return res.status(503).json({ error: 'ИИ-помощник пока не настроен.' });
+    }
+    const body = req.body || {};
+    const raw = Array.isArray(body.messages) ? body.messages : [];
+    if (raw.length === 0 || raw.length > 30) {
+        return res.status(400).json({ error: 'Bad messages payload' });
+    }
+
+    const safeMessages = raw
+        .filter(m => m && (m.role === 'user' || m.role === 'assistant') && typeof m.content === 'string')
+        .slice(-12)
+        .map(m => ({ role: m.role, content: m.content.slice(0, 2000) }));
+
+    if (safeMessages.length === 0) {
+        return res.status(400).json({ error: 'Bad messages payload' });
+    }
+
+    const systemPrompt = buildLessonSystemPrompt(body.lesson || {});
+
+    try {
+        const controller = new AbortController();
+        const timer = setTimeout(() => controller.abort(), 15000);
+        const groqRes = await fetch(GROQ_URL, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${GROQ_API_KEY}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                model: GROQ_MODEL,
+                messages: [{ role: 'system', content: systemPrompt }, ...safeMessages],
+                temperature: 0.6,
+                max_tokens: 400
+            }),
+            signal: controller.signal
+        }).finally(() => clearTimeout(timer));
+
+        if (!groqRes.ok) {
+            const errText = await groqRes.text().catch(() => '');
+            console.error('[Groq] error:', groqRes.status, errText.slice(0, 300));
+            return res.status(502).json({ error: 'Не удалось получить ответ от ИИ.' });
+        }
+        const data = await groqRes.json();
+        const reply = (data && data.choices && data.choices[0]
+            && data.choices[0].message && data.choices[0].message.content) || '…';
+        res.json({ reply });
+    } catch (err) {
+        console.error('[Groq] fetch failed:', err && err.message);
+        res.status(502).json({ error: 'Не удалось связаться с ИИ.' });
+    }
+});
+
 // SPA catch-all — только для локального dev.
 if (!IS_PROD) {
     app.get('*', (req, res) => {

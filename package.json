@@ -1,6 +1,6 @@
 {
   "name": "ekitili",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "description": "EkiTili - Приложение для изучения казахского языка",
   "main": "server.js",
   "scripts": {
