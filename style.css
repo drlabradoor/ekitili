@@ -5695,23 +5695,17 @@ body.lesson-open .app-header { display: none !important; }
    Step 8 — Profile hero redesign + BatyrAvatar + Customization
    ===================================================== */
 
-/* Profile hero — row layout */
+/* Profile hero — centered column */
 #tab-profile .profile-section {
     flex-direction: column;
-    align-items: stretch;
-    padding: 20px 18px 18px;
-}
-.profile-hero-row {
-    display: flex;
     align-items: center;
-    gap: 20px;
-    position: relative;
-    z-index: 1;
+    padding: 20px 18px 18px;
 }
 .profile-avatar-wrap {
     position: relative;
-    flex-shrink: 0;
+    display: inline-block;
     padding-top: 16px;
+    margin: 0 auto 12px;
 }
 .profile-batyr-avatar-el {
     display: block;
@@ -5739,31 +5733,14 @@ body.lesson-open .app-header { display: none !important; }
     transition: transform 0.12s;
 }
 .profile-edit-btn:hover { transform: scale(1.1); }
-.profile-hero-info {
-    flex: 1;
-    min-width: 0;
-    color: var(--cream);
-}
-.profile-hero-eyebrow {
-    font-size: 10px;
-    letter-spacing: 0.18em;
-    text-transform: uppercase;
-    font-family: 'Fredoka', 'Manrope', sans-serif;
-    opacity: 0.85;
-    margin-bottom: 2px;
-}
-.profile-hero-info .profile-nickname {
-    font-size: 20px;
-    margin: 0;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
 .profile-hero-sub {
     font-size: 12px;
     font-weight: 600;
+    color: var(--cream);
     opacity: 0.85;
-    margin-top: 3px;
+    margin-top: 2px;
+    position: relative;
+    z-index: 1;
 }
 
 /* ---- Customization overlay ---- */

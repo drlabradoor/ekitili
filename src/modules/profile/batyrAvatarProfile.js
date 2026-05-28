@@ -107,6 +107,44 @@ export function createBatyrAvatarEl(size = 84, stage = 0, gear = {}, portrait = 
     return wrap;
 }
 
+/**
+ * Возвращает HTML-строку батыра для использования в innerHTML (арена боя).
+ * Сохраняет совместимость с updateBatyrHP/animateBatyrHit через .batyr--{side}.
+ */
+export function createBatyrBattleHTML({ side = 'left', username = '', hp = 100, maxHp = 100, gear = {}, portrait = 'horse', stage = 0 }) {
+    const hpPct  = Math.max(0, Math.min(100, (hp / maxHp) * 100));
+    const hpColor = hpPct > 50 ? '#22c55e' : hpPct > 25 ? '#eab308' : '#ef4444';
+    const avatarEl = createBatyrAvatarEl(90, stage, gear, portrait, 'full');
+    // Зеркалим правую сторону
+    if (side === 'right') avatarEl.style.transform = 'scaleX(-1)';
+
+    const wrap = document.createElement('div');
+    wrap.className = `batyr-container batyr--${side}`;
+    wrap.setAttribute('data-side', side);
+
+    const nameEl = document.createElement('div');
+    nameEl.className = 'batyr-name';
+    nameEl.textContent = username;
+
+    const hpBar = document.createElement('div');
+    hpBar.className = 'batyr-hp-bar';
+    const hpFill = document.createElement('div');
+    hpFill.className = 'batyr-hp-fill';
+    hpFill.style.cssText = `width:${hpPct}%;background:${hpColor}`;
+    hpBar.appendChild(hpFill);
+
+    const hpText = document.createElement('div');
+    hpText.className = 'batyr-hp-text';
+    hpText.textContent = `${hp} / ${maxHp}`;
+
+    wrap.appendChild(nameEl);
+    wrap.appendChild(avatarEl);
+    wrap.appendChild(hpBar);
+    wrap.appendChild(hpText);
+
+    return wrap.outerHTML;
+}
+
 export function updateProfileBatyrAvatar() {
     const container = document.getElementById('profile-batyr-avatar');
     if (!container) return;

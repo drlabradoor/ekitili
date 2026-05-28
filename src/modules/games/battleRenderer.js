@@ -1,5 +1,7 @@
 // Рендерер экранов батла: лобби, арена, результат
-import { createBatyrSVG, updateBatyrHP } from './batyrAvatar.js';
+import { updateBatyrHP } from './batyrAvatar.js';
+import { createBatyrBattleHTML } from '../profile/batyrAvatarProfile.js';
+import { userProfile } from '../../data/user.js';
 
 // =====================================================
 // SVG-фигуры для карточек (плоский дизайн)
@@ -37,7 +39,7 @@ export function renderLobby(container, username) {
             <div class="battle-title">Батыр Батл</div>
             <div class="battle-subtitle">Онлайн-дуэль на знание казахского</div>
             <div class="lobby-avatar-preview">
-                ${createBatyrSVG({ side: 'left', username: username || 'Ты', hp: 100, maxHp: 100 })}
+                ${createBatyrBattleHTML({ side: 'left', username: username || 'Ты', hp: 100, maxHp: 100, gear: userProfile.gear || {}, portrait: userProfile.portrait || 'horse', stage: userProfile.stage || 0 })}
             </div>
             <button class="battle-find-btn" id="battle-find-btn">
                 <i class="fas fa-search"></i> Найти соперника
@@ -80,20 +82,26 @@ export function renderArena(container, state) {
         <div class="battle-arena">
             <div class="arena-top">
                 <div class="arena-batyr arena-batyr--left">
-                    ${createBatyrSVG({
+                    ${createBatyrBattleHTML({
                         side: 'left',
                         username: playerSide === 'left' ? player.username : opponent.username,
                         hp: playerSide === 'left' ? player.hp : opponent.hp,
-                        maxHp: 100
+                        maxHp: 100,
+                        gear:    playerSide === 'left' ? (userProfile.gear || {}) : {},
+                        portrait:playerSide === 'left' ? (userProfile.portrait || 'horse') : 'eagle',
+                        stage:   playerSide === 'left' ? (userProfile.stage || 0) : 0,
                     })}
                 </div>
                 <div class="arena-vs">VS</div>
                 <div class="arena-batyr arena-batyr--right">
-                    ${createBatyrSVG({
+                    ${createBatyrBattleHTML({
                         side: 'right',
                         username: playerSide === 'right' ? player.username : opponent.username,
                         hp: playerSide === 'right' ? player.hp : opponent.hp,
-                        maxHp: 100
+                        maxHp: 100,
+                        gear:    playerSide === 'right' ? (userProfile.gear || {}) : {},
+                        portrait:playerSide === 'right' ? (userProfile.portrait || 'horse') : 'eagle',
+                        stage:   playerSide === 'right' ? (userProfile.stage || 0) : 0,
                     })}
                 </div>
             </div>
