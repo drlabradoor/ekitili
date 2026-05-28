@@ -7,6 +7,7 @@ import { drawCircleProgress, drawActivityChart } from '../../utils/charts.js';
 import { renderLeaderboard } from '../leaderboard/leaderboardRenderer.js';
 import { REQUIRED_ACHIEVEMENTS } from '../../services/achievements.js';
 import { getStreakData, STREAK_UPDATED_EVENT } from '../../services/streak.js';
+import { updateProfileBatyrAvatar } from './batyrAvatarProfile.js';
 
 export function renderStats() {
     // 1. Кольцевой прогресс-бар (курс)
@@ -178,15 +179,12 @@ function showAchievementDetails(achId, userAch) {
  */
 export function updateProfileDisplay() {
     const nicknameEl = document.getElementById('profileNickname');
-    const avatarEl = document.querySelector('.profile-avatar-large');
+    if (nicknameEl && userProfile) nicknameEl.textContent = userProfile.nickname;
 
-    if (nicknameEl && userProfile) {
-        nicknameEl.textContent = userProfile.nickname;
-    }
+    const levelEl = document.getElementById('profileLevel');
+    if (levelEl && userProfile) levelEl.textContent = userProfile.level || 1;
 
-    if (avatarEl && userProfile) {
-        avatarEl.textContent = userProfile.avatar;
-    }
+    updateProfileBatyrAvatar();
 }
 
 // Слушаем обновление достижений и перерисовываем

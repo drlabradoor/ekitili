@@ -50,9 +50,20 @@
             </section>
             <!-- Профиль + Статистика -->
             <section id="tab-profile" class="tab-section">
+                <!-- Overlay кастомизации (скрыт до нажатия карандаша) -->
+                <div id="profile-customization-overlay" class="profile-customization-overlay" style="display:none;"></div>
                 <div class="profile-section">
-                    <div class="profile-avatar-large">A</div>
-                    <div class="profile-nickname" id="profileNickname">alexey_kz</div>
+                    <div class="profile-hero-row">
+                        <div class="profile-avatar-wrap">
+                            <div id="profile-batyr-avatar" class="profile-batyr-avatar-el"></div>
+                            <button id="profile-edit-btn" class="profile-edit-btn" aria-label="Кастомизация">✏️</button>
+                        </div>
+                        <div class="profile-hero-info">
+                            <div class="profile-hero-eyebrow">Батыр степи</div>
+                            <div class="profile-nickname" id="profileNickname">alexey_kz</div>
+                            <div class="profile-hero-sub">Ур. <span id="profileLevel">1</span></div>
+                        </div>
+                    </div>
                     <div class="profile-actions">
                         <button id="login-btn" class="login-btn" style="display:none;">Войти</button>
                         <button id="logout-btn" class="logout-btn" style="display:none;">Выйти</button>

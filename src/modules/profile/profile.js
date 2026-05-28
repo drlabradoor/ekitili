@@ -6,6 +6,7 @@ import { logoutUser } from '../../services/auth.js';
 import { isAuthenticated } from '../../services/auth.js';
 import { showLogin } from '../auth/auth.js';
 import { renderStats, updateProfileDisplay } from './profileRenderer.js';
+import { updateProfileBatyrAvatar, openCustomizationOverlay } from './batyrAvatarProfile.js';
 
 export function initProfile() {
     const profileIcon = document.querySelector('.profile-icon');
@@ -22,8 +23,13 @@ export function initProfile() {
     const confirmLogoutBtn = document.getElementById('confirm-logout');
     const cancelLogoutBtn = document.getElementById('cancel-logout');
 
-    // Показываем/скрываем кнопки в зависимости от авторизации
     updateAuthButtons();
+
+    // Батыр-аватар в герое профиля
+    updateProfileBatyrAvatar();
+
+    const editBtn = document.getElementById('profile-edit-btn');
+    if (editBtn) editBtn.addEventListener('click', openCustomizationOverlay);
 
     function openProfileModal() {
         if (profileAvatarLarge) profileAvatarLarge.textContent = userProfile.avatar;

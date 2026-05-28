@@ -8,11 +8,21 @@ import { loadStreakFromServer } from '../services/streak.js';
 const currentUser = getCurrentUser();
 const defaultNickname = currentUser ? currentUser.username : 'alexey_kz';
 
+const DEFAULT_GEAR = {
+    helmet: false,  helmetColor: '#2d6a7a',
+    armor:  false,  armorColor:  '#7a4a1c',
+    sword:  false,  swordColor:  '#bf983a',
+    shield: false,  shieldColor: '#2d6a7a',
+};
+
 export let userProfile = {
     avatar: getAvatarFromNickname(defaultNickname),
     nickname: defaultNickname,
     about: 'Люблю казахский язык и учусь каждый день!',
-    achievements: [] // Список ID полученных достижений
+    achievements: [],
+    portrait: 'horse',
+    stage: 0,
+    gear: { ...DEFAULT_GEAR },
 };
 
 /**
@@ -78,16 +88,17 @@ export function loadUserProfile() {
             userProfile = {
                 ...userProfile,
                 ...profile,
-                nickname: currentUser.username, // Всегда используем актуальный никнейм
-                avatar: getAvatarFromNickname(currentUser.username)
+                nickname: currentUser.username,
+                avatar: getAvatarFromNickname(currentUser.username),
+                gear: { ...DEFAULT_GEAR, ...(profile.gear || {}) },
+                portrait: profile.portrait || 'horse',
+                stage: profile.stage || 0,
             };
         } catch (e) {
             console.error('Ошибка загрузки профиля:', e);
-            // Если ошибка, обновляем с текущим пользователем
             updateUserProfile(currentUser.username);
         }
     } else {
-        // Если профиль не сохранён, обновляем с текущим пользователем
         updateUserProfile(currentUser.username);
     }
 
@@ -104,7 +115,10 @@ export function resetUserProfile() {
         avatar: 'G',
         nickname: 'Гость',
         about: 'Войдите, чтобы начать обучение!',
-        achievements: []
+        achievements: [],
+        portrait: 'horse',
+        stage: 0,
+        gear: { ...DEFAULT_GEAR },
     };
     localStorage.removeItem('userProfile');
 }
