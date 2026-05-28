@@ -5159,7 +5159,7 @@ body.lesson-open .app-header { display: none !important; }
     letter-spacing: 0.02em;
     text-align: center;
     padding: 18px 22px 16px;
-    margin: 0 0 24px;
+    margin: 0 0 8px;
     -webkit-text-fill-color: currentColor;
     -webkit-background-clip: border-box;
     background-clip: border-box;
@@ -5207,28 +5207,17 @@ body.lesson-open .app-header { display: none !important; }
 .podium-crown { font-size: 24px; margin-bottom: -4px; }
 .podium-avatar-wrap {
     position: relative;
-}
-.podium-avatar {
-    width: 54px;
-    height: 54px;
-    border-radius: 50%;
-    background: var(--cream-2);
-    border: 3px solid var(--secondary-deep);
-    box-shadow: 0 3px 0 var(--secondary-deep);
-    color: var(--secondary-deep);
-    font-family: 'Fredoka', 'Manrope', sans-serif;
-    font-weight: 700;
-    font-size: 22px;
     display: flex;
     align-items: center;
     justify-content: center;
+    margin: 0 auto;
 }
-.podium-place--1 .podium-avatar { width: 68px; height: 68px; font-size: 28px; }
 .podium-medal {
     position: absolute;
-    bottom: -6px;
-    right: -6px;
-    font-size: 22px;
+    bottom: -8px;
+    right: -8px;
+    font-size: 24px;
+    z-index: 10;
 }
 .podium-name {
     font-family: 'Fredoka', 'Manrope', sans-serif;

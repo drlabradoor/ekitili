@@ -33,16 +33,36 @@ export function renderLeaderboard(list, containerId) {
             const isFirst = place === 1;
             const podiumPlace = document.createElement('div');
             podiumPlace.className = `podium-place podium-place--${place}`;
+
+            // Создаём батыр-аватар с дефолтным конём (без gear)
+            const avatarWrap = document.createElement('div');
+            avatarWrap.className = 'podium-avatar-wrap';
+            const batyrEl = createBatyrAvatarEl(
+                isFirst ? 68 : 54,  // size: bigger for 1st place
+                0,  // stage: no progression ring
+                {},  // gear: empty (no equipment)
+                'horse',  // portrait: default horse
+                'mini'  // kind
+            );
+
+            // Убераем обёртку батыра и вставляем его тело напрямую
+            const batyrContent = batyrEl.innerHTML;
+            avatarWrap.innerHTML = batyrEl.innerHTML;
+
+            // Добавляем медаль поверх
+            const medal = document.createElement('div');
+            medal.className = 'podium-medal';
+            medal.setAttribute('aria-hidden', 'true');
+            medal.textContent = MEDALS[idx];
+            avatarWrap.appendChild(medal);
+
             podiumPlace.innerHTML = `
                 ${isFirst ? '<div class="podium-crown" aria-hidden="true">👑</div>' : ''}
-                <div class="podium-avatar-wrap">
-                    <div class="podium-avatar">${escapeHtml((player.name || '?')[0].toUpperCase())}</div>
-                    <div class="podium-medal" aria-hidden="true">${MEDALS[idx]}</div>
-                </div>
                 <div class="podium-name">${escapeHtml(player.name || '')}</div>
                 <div class="podium-points">${player.points ?? 0} ★</div>
                 <div class="podium-bar"><span class="podium-bar-number">${place}</span></div>
             `;
+            podiumPlace.insertBefore(avatarWrap, podiumPlace.firstChild);
             podium.appendChild(podiumPlace);
         });
         container.appendChild(podium);
