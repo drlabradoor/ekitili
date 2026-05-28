@@ -5164,7 +5164,6 @@ body.lesson-open .app-header { display: none !important; }
     -webkit-background-clip: border-box;
     background-clip: border-box;
 }
-#tab-leaderboard .leaderboard-label::before { content: '🏆 '; }
 
 #tab-leaderboard .leaderboard-block {
     margin: 0 14px 28px;
@@ -5175,12 +5174,11 @@ body.lesson-open .app-header { display: none !important; }
 }
 #tab-leaderboard .leaderboard-title {
     font-family: 'Fredoka', 'Manrope', sans-serif;
-    font-weight: 600;
+    font-weight: 700;
     font-size: 13px;
     letter-spacing: 0.12em;
     text-transform: uppercase;
     color: var(--secondary-deep);
-    opacity: 0.85;
     text-align: center;
     margin: 0 0 16px;
 }
@@ -5331,11 +5329,11 @@ body.lesson-open .app-header { display: none !important; }
 #tab-leaderboard .leaderboard-empty {
     text-align: center;
     padding: 40px 16px;
-    color: var(--ink-soft);
+    color: var(--ink);
     font-family: 'Manrope', system-ui, sans-serif;
     font-size: 15px;
+    font-weight: 500;
     line-height: 1.5;
-    font-style: italic;
 }
 
 /* ---- "You" card pinned at the bottom of the tab ---- */
