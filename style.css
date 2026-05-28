@@ -5341,7 +5341,7 @@ body.lesson-open .app-header { display: none !important; }
 /* ---- "You" card pinned at the bottom of the tab ---- */
 #tab-leaderboard .leaderboard-user {
     margin: 24px 14px 8px;
-    padding: 14px 16px;
+    padding: 12px 14px;
     background: var(--secondary);
     color: var(--cream);
     border: 2.5px solid var(--secondary-deep);
@@ -5349,7 +5349,10 @@ body.lesson-open .app-header { display: none !important; }
     box-shadow: 0 4px 0 var(--secondary-deep);
     display: flex;
     align-items: center;
-    gap: 16px;
+    gap: 12px;
+}
+#tab-leaderboard .leaderboard-user-avatar-wrap {
+    flex-shrink: 0;
 }
 #tab-leaderboard .leaderboard-user-label {
     flex: 1;

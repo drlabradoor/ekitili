@@ -1,6 +1,9 @@
 // Рендеринг лидерборда
 // Дизайн-референс: design-handoff/project/screens_board.jsx
 // Top-3 идут на подиум, остальные — chunky-список ниже.
+import { createBatyrAvatarEl } from '../profile/batyrAvatarProfile.js';
+import { userProfile } from '../../data/user.js';
+
 const MEDALS = ['🥇', '🥈', '🥉'];
 
 export function renderLeaderboard(list, containerId) {
@@ -69,4 +72,31 @@ function escapeHtml(str) {
         .replace(/&/g, '&amp;')
         .replace(/</g, '&lt;')
         .replace(/>/g, '&gt;');
+}
+
+// Показать кастомный аватар пользователя в "Ваше место" карточке
+export function renderUserAvatarInLeaderboard() {
+    const userCard = document.getElementById('leaderboardUser');
+    if (!userCard) return;
+
+    // Удаляем старый аватар если уже есть
+    const existingAvatar = userCard.querySelector('.leaderboard-user-avatar-wrap');
+    if (existingAvatar) existingAvatar.remove();
+
+    // Создаём обёртку для аватара в начало карточки
+    const avatarWrap = document.createElement('div');
+    avatarWrap.className = 'leaderboard-user-avatar-wrap';
+
+    // Вставляем батыр-аватар с текущими настройками
+    const batyrEl = createBatyrAvatarEl(
+        44,  // size
+        userProfile.stage || 0,
+        userProfile.gear || {},
+        userProfile.portrait || 'horse',
+        'mini'  // kind
+    );
+    avatarWrap.appendChild(batyrEl);
+
+    // Вставляем в начало карточки, перед текстом
+    userCard.insertBefore(avatarWrap, userCard.firstChild);
 }

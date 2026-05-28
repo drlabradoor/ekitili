@@ -1,5 +1,5 @@
 // Логика лидерборда
-import { renderLeaderboard } from './leaderboardRenderer.js';
+import { renderLeaderboard, renderUserAvatarInLeaderboard } from './leaderboardRenderer.js';
 import { getCurrentUser } from '../../services/auth.js';
 import { apiGetPublic, apiGet } from '../../services/apiClient.js';
 
@@ -39,6 +39,8 @@ async function loadUserLeaderboardData() {
             const userPoints = document.getElementById('leaderboardUserPoints');
             if (userPlace) userPlace.textContent = data.place || '-';
             if (userPoints) userPoints.textContent = (data.points || 0) + '★';
+            // Показываем кастомный аватар пользователя
+            renderUserAvatarInLeaderboard();
         }
     } catch (error) {
         console.error('Error loading user leaderboard data:', error);
