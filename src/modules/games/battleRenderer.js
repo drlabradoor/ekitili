@@ -87,9 +87,9 @@ export function renderArena(container, state) {
                         username: playerSide === 'left' ? player.username : opponent.username,
                         hp: playerSide === 'left' ? player.hp : opponent.hp,
                         maxHp: 100,
-                        gear:    playerSide === 'left' ? (userProfile.gear || {}) : {},
-                        portrait:playerSide === 'left' ? (userProfile.portrait || 'horse') : 'eagle',
-                        stage:   playerSide === 'left' ? (userProfile.stage || 0) : 0,
+                        gear:     playerSide === 'left' ? (userProfile.gear || {}) : (opponent.gear || {}),
+                        portrait: playerSide === 'left' ? (userProfile.portrait || 'horse') : (opponent.portrait || 'horse'),
+                        stage:    playerSide === 'left' ? (userProfile.stage || 0) : (opponent.stage || 0),
                     })}
                 </div>
                 <div class="arena-vs">VS</div>
@@ -99,9 +99,9 @@ export function renderArena(container, state) {
                         username: playerSide === 'right' ? player.username : opponent.username,
                         hp: playerSide === 'right' ? player.hp : opponent.hp,
                         maxHp: 100,
-                        gear:    playerSide === 'right' ? (userProfile.gear || {}) : {},
-                        portrait:playerSide === 'right' ? (userProfile.portrait || 'horse') : 'eagle',
-                        stage:   playerSide === 'right' ? (userProfile.stage || 0) : 0,
+                        gear:     playerSide === 'right' ? (userProfile.gear || {}) : (opponent.gear || {}),
+                        portrait: playerSide === 'right' ? (userProfile.portrait || 'horse') : (opponent.portrait || 'horse'),
+                        stage:    playerSide === 'right' ? (userProfile.stage || 0) : (opponent.stage || 0),
                     })}
                 </div>
             </div>
@@ -116,7 +116,7 @@ export function renderArena(container, state) {
 // =====================================================
 // Рендер фазы атаки: 3 карты на выбор
 // =====================================================
-export function renderAttackPhase(actionArea, hand, turnInfo) {
+export function renderAttackPhase(actionArea, hand, turnInfo, timerSeconds = 10) {
     turnInfo.textContent = 'Твой ход! Выбери карту для атаки:';
     actionArea.innerHTML = `
         <div class="defend-timer" style="margin-bottom:18px;">

@@ -1,5 +1,6 @@
 // Клиентский модуль батла — socket.io + управление состоянием
 import { userFlashcards } from '../../data/flashcards.js';
+import { userProfile } from '../../data/user.js';
 import { unlockAchievement } from '../../services/achievements.js';
 import { recordActivity } from '../../services/streak.js';
 import { BACKEND_URL } from '../../config/env.js';
@@ -147,20 +148,27 @@ function joinBattle() {
     const username = localStorage.getItem('username') || 'Батыр';
     const userId = localStorage.getItem('userId') || null;
 
-    // Отправляем карточки для игры
     const cards = userFlashcards.map(c => ({
         front: c.front,
         back: c.back,
         svgShape: c.svgShape || null
     }));
 
-    socket.emit('join_battle', { username, userId, cards });
+    // Передаём кастомизацию аватара чтобы противник видел реальный маскот
+    const avatar = {
+        portrait: userProfile.portrait || 'horse',
+        stage:    userProfile.stage   || 0,
+        gear:     userProfile.gear    || {},
+    };
+
+    socket.emit('join_battle', { username, userId, cards, avatar });
 }
 
 // =====================================================
 // Обработчики серверных событий
 // =====================================================
 function handleGameStart(data) {
+    const oppData = data.players[1 - data.playerIdx];
     gameState = {
         gameId: data.gameId,
         playerIdx: data.playerIdx,
@@ -173,9 +181,12 @@ function handleGameStart(data) {
             combo: 0
         },
         opponent: {
-            username: data.players[1 - data.playerIdx].username,
-            hp: data.players[1 - data.playerIdx].hp,
-            combo: 0
+            username: oppData.username,
+            hp: oppData.hp,
+            combo: 0,
+            portrait: oppData.avatar?.portrait || 'horse',
+            stage:    oppData.avatar?.stage    || 0,
+            gear:     oppData.avatar?.gear     || {},
         }
     };
 
@@ -191,8 +202,9 @@ function handleAttackTurn(data) {
     const turnInfo = document.getElementById('arena-turn-info');
     if (!actionArea || !turnInfo) return;
 
-    renderAttackPhase(actionArea, data.hand, turnInfo);
-    startDefenseTimer(data.timerSeconds);
+    const attackSecs = data.attackTimerSeconds || 10;
+    renderAttackPhase(actionArea, data.hand, turnInfo, attackSecs);
+    startDefenseTimer(attackSecs);
 
     // Привязать клики по картам
     actionArea.querySelectorAll('.attack-card').forEach(card => {

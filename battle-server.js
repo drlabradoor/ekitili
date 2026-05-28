@@ -6,8 +6,9 @@ const { Server } = require('socket.io');
 
 const INITIAL_HP = 100;
 const MAX_DAMAGE = 25;        // урон за ошибку / таймаут
-const MAX_TIMER = 6;          // макс время ответа
-const MIN_TIMER = 3;          // мин время ответа
+const MAX_TIMER = 6;          // макс время ответа (защита)
+const MIN_TIMER = 3;          // мин время ответа (защита)
+const ATTACK_TIMER = 10;      // время на выбор карты атаки
 const MAX_PARRY_WINDOW = 2;   // окно парирования на макс времени
 const MIN_PARRY_WINDOW = 1;   // окно парирования на мин времени
 const COMBO_THRESHOLD = 3;    // 3 подряд = комбо
@@ -88,7 +89,12 @@ function handleJoinBattle(io, socket, data) {
     // Очистить из очереди если уже ждёт
     if (waitingPlayer && waitingPlayer.socketId === socket.id) return;
 
-    const playerInfo = { socketId: socket.id, username, userId, cards };
+    const safeAvatar = {
+        portrait: (data.avatar?.portrait) || 'horse',
+        stage:    Number(data.avatar?.stage)  || 0,
+        gear:     (data.avatar?.gear && typeof data.avatar.gear === 'object') ? data.avatar.gear : {},
+    };
+    const playerInfo = { socketId: socket.id, username, userId, cards, avatar: safeAvatar };
 
     if (!waitingPlayer) {
         waitingPlayer = playerInfo;
@@ -138,6 +144,7 @@ function createGame(gameId, p1, p2) {
                 socketId: p1.socketId,
                 username: p1.username,
                 userId: p1.userId,
+                avatar: p1.avatar,
                 hp: INITIAL_HP,
                 combo: 0,
                 maxCombo: 0,
@@ -149,6 +156,7 @@ function createGame(gameId, p1, p2) {
                 socketId: p2.socketId,
                 username: p2.username,
                 userId: p2.userId,
+                avatar: p2.avatar,
                 hp: INITIAL_HP,
                 combo: 0,
                 maxCombo: 0,
@@ -179,7 +187,8 @@ function emitGameStart(io, game) {
             playerSide: i === 0 ? 'left' : 'right',
             players: game.players.map(p => ({
                 username: p.username,
-                hp: p.hp
+                hp: p.hp,
+                avatar: p.avatar,
             })),
             attackerIdx: game.attackerIdx
         });
@@ -200,20 +209,23 @@ function dealHand(io, game) {
 
     const attackerSock = io.sockets.sockets.get(attacker.socketId);
     if (attackerSock) {
-        attackerSock.emit('your_turn_attack', { hand, timerSeconds: game.timerSeconds });
+        attackerSock.emit('your_turn_attack', {
+            hand,
+            timerSeconds: game.timerSeconds,
+            attackTimerSeconds: ATTACK_TIMER,
+        });
     }
 
-    // Защитнику — ожидание
     const defIdx = 1 - game.attackerIdx;
     const defSock = io.sockets.sockets.get(game.players[defIdx].socketId);
     if (defSock) {
         defSock.emit('opponent_attacking', {});
     }
 
-    // Таймаут для атакующего — автовыбор случайной карты
+    // Таймаут атакующего — передаёт ход если не выбрал карту
     game.attackTimeout = setTimeout(() => {
         handleAttackTimeout(io, game);
-    }, game.timerSeconds * 1000);
+    }, ATTACK_TIMER * 1000);
 }
 
 // =====================================================
