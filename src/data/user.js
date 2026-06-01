@@ -71,11 +71,16 @@ export function updateUserProfile(username) {
 export function loadUserProfile() {
     const currentUser = getCurrentUser();
     if (!currentUser) {
-        // Если пользователь не авторизован, используем дефолтные данные
+        // Если пользователь не авторизован, используем дефолтные данные.
+        // gear/portrait/stage обязательны — иначе кастомизация падает на undefined.
         userProfile = {
             avatar: 'G',
             nickname: 'Гость',
-            about: 'Войдите, чтобы начать обучение!'
+            about: 'Войдите, чтобы начать обучение!',
+            achievements: [],
+            portrait: 'horse',
+            stage: 0,
+            gear: { ...DEFAULT_GEAR },
         };
         return;
     }

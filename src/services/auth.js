@@ -21,7 +21,8 @@ export async function registerUser(username, password) {
         return {
             success: true,
             userId: data.user_id,
-            username: data.username
+            username: data.username,
+            token: data.token
         };
     } catch (error) {
         console.error('Ошибка регистрации:', error);
@@ -48,7 +49,8 @@ export async function loginUser(username, password) {
         return {
             success: true,
             userId: data.user_id,
-            username: data.username
+            username: data.username,
+            token: data.token
         };
     } catch (error) {
         console.error('Ошибка входа:', error);
@@ -77,6 +79,7 @@ export async function logoutUser() {
     localStorage.removeItem('user');
     localStorage.removeItem('userId');
     localStorage.removeItem('username');
+    localStorage.removeItem('sessionToken');
 
     resetUserProfile();
     resetStreakData();
@@ -104,11 +107,23 @@ export function getCurrentUser() {
 
 /**
  * Сохранить данные пользователя в localStorage (только для UI-отрисовки).
+ * token — подписанный сессионный токен; шлётся в заголовке Authorization,
+ * чтобы авторизация работала там, где браузер блокирует сторонние cookie.
  */
-export function saveUser(userId, username) {
+export function saveUser(userId, username, token) {
     localStorage.setItem('userId', userId.toString());
     localStorage.setItem('username', username);
     localStorage.setItem('user', JSON.stringify({ userId, username }));
+    if (token) {
+        localStorage.setItem('sessionToken', token);
+    }
+}
+
+/**
+ * Получить сессионный токен для заголовка Authorization (или null).
+ */
+export function getSessionToken() {
+    return localStorage.getItem('sessionToken');
 }
 
 /**

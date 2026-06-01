@@ -56,7 +56,7 @@ app.use(cors({
     },
     credentials: true,
     methods: ['GET', 'POST', 'OPTIONS'],
-    allowedHeaders: ['Content-Type']
+    allowedHeaders: ['Content-Type', 'Authorization']
 }));
 
 app.use(helmet({ contentSecurityPolicy: false }));
@@ -181,8 +181,19 @@ function clearSessionCookie(res) {
     res.clearCookie(SESSION_COOKIE, { path: '/' });
 }
 
+// Токен берём из заголовка Authorization: Bearer <token> ИЛИ из cookie.
+// Заголовок нужен для устройств/браузеров, блокирующих сторонние cookie
+// (Safari/iOS, Brave, строгий Firefox/Chrome), т.к. фронтенд и бэкенд на разных сайтах.
+function getSessionToken(req) {
+    const auth = req.headers && req.headers.authorization;
+    if (typeof auth === 'string' && auth.startsWith('Bearer ')) {
+        return auth.slice(7);
+    }
+    return (req.cookies && req.cookies[SESSION_COOKIE]) || null;
+}
+
 function requireAuth(req, res, next) {
-    const token = req.cookies && req.cookies[SESSION_COOKIE];
+    const token = getSessionToken(req);
     const userId = verifySession(token);
     if (!userId) {
         return res.status(401).json({ error: 'Not authenticated' });
@@ -249,7 +260,11 @@ app.post('/api/register', authLimiter, async (req, res, next) => {
         );
         const row = rows[0];
         setSessionCookie(res, Number(row.user_id));
-        res.json({ user_id: Number(row.user_id), username: row.username });
+        res.json({
+            user_id: Number(row.user_id),
+            username: row.username,
+            token: signSession(Number(row.user_id))
+        });
     } catch (dbError) {
         if (dbError.code === '23505') {
             return res.status(400).json({ error: 'User with this username already exists' });
@@ -296,7 +311,11 @@ app.post('/api/login', authLimiter, async (req, res, next) => {
         }
 
         setSessionCookie(res, Number(user.user_id));
-        res.json({ user_id: Number(user.user_id), username: user.username });
+        res.json({
+            user_id: Number(user.user_id),
+            username: user.username,
+            token: signSession(Number(user.user_id))
+        });
     } catch (error) {
         next(error);
     }
@@ -314,7 +333,7 @@ app.post('/api/logout', (req, res) => {
 // API: Кто я (восстановление сессии на клиенте)
 // =====================================================
 app.get('/api/me', async (req, res, next) => {
-    const token = req.cookies && req.cookies[SESSION_COOKIE];
+    const token = getSessionToken(req);
     const userId = verifySession(token);
     if (!userId) return res.json({ user: null });
 

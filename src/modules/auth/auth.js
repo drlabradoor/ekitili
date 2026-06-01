@@ -60,7 +60,7 @@ function setupLoginForm() {
 
         if (result.success) {
             // Сохраняем данные пользователя
-            saveUser(result.userId, result.username);
+            saveUser(result.userId, result.username, result.token);
 
             // Обновляем профиль
             updateUserProfile(result.username);
@@ -165,7 +165,7 @@ function setupRegisterForm() {
 
         if (result.success) {
             // Сохраняем данные пользователя
-            saveUser(result.userId, result.username);
+            saveUser(result.userId, result.username, result.token);
 
             // Обновляем профиль
             updateUserProfile(result.username);

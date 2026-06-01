@@ -7,6 +7,14 @@ const BASE = `${BACKEND_URL}/api`;
 const DEFAULT_TIMEOUT = 15000;   // 15 с — Render free tier может отвечать долго
 const RETRY_DELAYS = [0, 4000, 8000]; // первая попытка сразу, потом 4 с, потом 8 с
 
+// Заголовок Authorization из сохранённого токена сессии.
+// Нужен потому, что фронтенд и бэкенд на разных сайтах, и многие браузеры
+// блокируют сторонние cookie — заголовок работает везде.
+function authHeaders() {
+    const token = localStorage.getItem('sessionToken');
+    return token ? { Authorization: `Bearer ${token}` } : {};
+}
+
 function handleStatus(res) {
     if (res.status === 401) {
         document.dispatchEvent(new CustomEvent('api-session-expired'));
@@ -42,14 +50,17 @@ async function fetchWithRetry(url, opts = {}, retries = RETRY_DELAYS) {
 }
 
 export async function apiGet(path) {
-    const res = await fetchWithRetry(`${BASE}${path}`, { credentials: 'include' });
+    const res = await fetchWithRetry(`${BASE}${path}`, {
+        credentials: 'include',
+        headers: { ...authHeaders() }
+    });
     return handleStatus(res);
 }
 
 export async function apiPost(path, body) {
     const res = await fetchWithRetry(`${BASE}${path}`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...authHeaders() },
         credentials: 'include',
         body: JSON.stringify(body)
     });

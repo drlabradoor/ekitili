@@ -233,7 +233,9 @@ function _buildGearRow(slot, icon, label, colorKey, preview) {
     const section = document.createElement('div');
     section.className = 'custom-section';
 
-    const gear = userProfile.gear || {};
+    // Гарантируем, что gear существует — на гостевом/неполном профиле его может не быть.
+    if (!userProfile.gear) userProfile.gear = {};
+    const gear = userProfile.gear;
     const equipped = !!gear[slot];
 
     section.innerHTML = `
@@ -252,8 +254,8 @@ function _buildGearRow(slot, icon, label, colorKey, preview) {
     const statusEl  = section.querySelector('.custom-gear-status');
 
     toggleBtn.onclick = () => {
-        const newVal = !userProfile.gear[slot];
-        userProfile.gear[slot] = newVal;
+        const newVal = !gear[slot];
+        gear[slot] = newVal;
         saveUserProfile();
         toggleBtn.textContent = newVal ? '✓' : 'надеть';
         toggleBtn.classList.toggle('equipped', newVal);
@@ -264,12 +266,12 @@ function _buildGearRow(slot, icon, label, colorKey, preview) {
     const swatches = section.querySelector('.custom-color-swatches');
     PALETTE.forEach(color => {
         const btn = document.createElement('button');
-        const isSel = (userProfile.gear[colorKey] || '') === color;
+        const isSel = (gear[colorKey] || '') === color;
         btn.className = 'custom-color-btn' + (isSel ? ' selected' : '');
         btn.style.setProperty('--swatch', color);
         btn.onclick = () => {
-            userProfile.gear[slot]    = true;
-            userProfile.gear[colorKey] = color;
+            gear[slot]     = true;
+            gear[colorKey] = color;
             saveUserProfile();
             swatches.querySelectorAll('.custom-color-btn').forEach(b => b.classList.remove('selected'));
             btn.classList.add('selected');
